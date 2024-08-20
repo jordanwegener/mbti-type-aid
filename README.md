@@ -1,4 +1,4 @@
-# MBTI Cognitive Function Typing App
+# MBTI Type Aid
 
 This is a simple app designed to help users identify someone's MBTI type using cognitive functions. The app provides a list of MBTI types along with their cognitive function stacks and allows users to drag and drop cognitive functions to create a custom stack. As you build your stack, the app will filter and display the closest matching MBTI types in real-time, ordered by the closest match to the stack you have created.
 
@@ -19,13 +19,13 @@ This is a simple app designed to help users identify someone's MBTI type using c
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-username/mbti-typing-app.git
+   git clone https://github.com/your-username/mbti-type-aid.git
    ```
 
 2. Navigate to the project directory:
 
    ```bash
-   cd mbti-typing-app
+   cd mbti-type-aid
    ```
 
 3. Install dependencies:
