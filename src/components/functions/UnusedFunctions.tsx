@@ -25,16 +25,17 @@ export const UnusedFunctions = () => {
   };
 
   return (
-    <Box
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      height={200}
-      width="100%"
-      border="1px dashed white"
-      flexDirection="row"
-    >
-      <DndContext onDragEnd={onDragEnd}>
+    <DndContext onDragEnd={onDragEnd}>
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        height={200}
+        width="100%"
+        border="1px dashed white"
+        borderRadius={1}
+        flexDirection="row"
+      >
         <SortableContext
           items={topRow.map((f) => f.id)}
           strategy={horizontalListSortingStrategy}
@@ -47,7 +48,7 @@ export const UnusedFunctions = () => {
             />
           ))}
         </SortableContext>
-      </DndContext>
-    </Box>
+      </Box>
+    </DndContext>
   );
 };

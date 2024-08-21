@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Tooltip, Typography } from "@mui/material";
+import { Box, Tooltip, Typography, useTheme } from "@mui/material";
 import {
   CognitiveFunction,
   CognitiveFunctionInfo
@@ -30,8 +30,11 @@ export const FunctionBlock: React.FC<FunctionProps> = ({
     <Box
       ref={setNodeRef}
       width={80}
-      color="blue"
       padding={1}
+      margin={1}
+      border={2}
+      borderRadius={2}
+      boxShadow={2}
       {...attributes}
       {...listeners}
       style={style}

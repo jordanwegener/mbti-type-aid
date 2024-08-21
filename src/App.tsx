@@ -13,12 +13,15 @@ import { Brightness4, Brightness7 } from "@mui/icons-material";
 import { StackConstructorDndKit } from "./components/playground/StackConstructorDndKit";
 
 const App = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
 
   const theme = createTheme({
     palette: {
       mode: darkMode ? "dark" : "light"
-    }
+    },
+    typography: {
+      fontFamily: "Helvetica, Arial, sans-serif"
+    },
   });
 
   const handleThemeToggle = () => {
@@ -30,7 +33,7 @@ const App = () => {
       <CssBaseline />
       <AppBar position="static">
         <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          <Typography variant="h4" component="div" sx={{ flexGrow: 1 }}>
             Cognitive Stack Builder
           </Typography>
           <IconButton color="inherit" onClick={handleThemeToggle}>
