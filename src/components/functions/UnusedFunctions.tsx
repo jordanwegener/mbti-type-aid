@@ -7,14 +7,11 @@ import {
   arrayMove
 } from "@dnd-kit/sortable";
 import { DndContext } from "@dnd-kit/core";
-import { CognitiveFunction } from "@src/domain/function/function";
+import { CognitiveFunction } from "@domain/function/function";
+import { defaultCogFuncs } from "@data/cognitiveFunctions";
 
-export interface UnusedFunctionsProps {
-  functions: { id: string; type: string }[];
-}
-
-export const UnusedFunctions = ({ functions }: UnusedFunctionsProps) => {
-  const [topRow, setTopRow] = React.useState(functions);
+export const UnusedFunctions = () => {
+  const [topRow, setTopRow] = React.useState(defaultCogFuncs);
 
   const onDragEnd = ({ active, over }) => {
     if (active.id !== over.id) {

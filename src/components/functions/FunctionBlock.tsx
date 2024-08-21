@@ -3,7 +3,7 @@ import { Box, Tooltip, Typography } from "@mui/material";
 import {
   CognitiveFunction,
   CognitiveFunctionInfo
-} from "../../domain/function/function";
+} from "@domain/function/function";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
