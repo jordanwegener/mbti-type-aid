@@ -11,9 +11,9 @@
     "noUnusedParameters": true,
     "paths": {
       "@src/*": ["src/*"],
-      "@styleguide/*": ["src/styleguide/*"],
       "@components/*": ["src/components/*"],
-      "@domain/*": ["src/domain/*"]
+      "@domain/*": ["src/domain/*"],
+      "@data/*": ["src/data/*"]
     }
   },
   "include": ["src/**/*"],
