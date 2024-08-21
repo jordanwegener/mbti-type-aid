@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { FunctionBlock } from "./FunctionBlock";
 import {
   horizontalListSortingStrategy,
@@ -13,10 +13,13 @@ import { getStackType } from "@data/stack";
 
 export const FunctionStackRow = () => {
   const [topRow, setTopRow] = React.useState(defaultCogFuncs);
-  
+
   // Extract the top 4 functions and convert to a string
-  const stackString = topRow.slice(0, 4).map((f) => f.type).join(",");
-  
+  const stackString = topRow
+    .slice(0, 4)
+    .map((f) => f.type)
+    .join(",");
+
   // Get the stack type if the top 4 functions form a valid MBTI stack
   const stackType = getStackType(stackString);
 
@@ -60,7 +63,7 @@ export const FunctionStackRow = () => {
       const functionType = updatedStack[i].type;
       const mirrorType = mirrorFunctionMap[functionType];
       const mirrorIndex = updatedStack.findIndex((f) => f.type === mirrorType);
-      
+
       // Move the mirrored function to its correct position
       const [mirroredFunction] = updatedStack.splice(mirrorIndex, 1);
       updatedStack.splice(i + 4, 0, mirroredFunction);
@@ -90,44 +93,52 @@ export const FunctionStackRow = () => {
 
   return (
     <DndContext onDragEnd={onDragEnd}>
-      <Box
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        height={200}
-        width="100%"
-        borderRadius={1}
-        flexDirection="row"
-      >
-        <SortableContext
-          items={topRow.map((f) => f.id)}
-          strategy={horizontalListSortingStrategy}
+      <Stack spacing={1}>
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          height={200}
+          width="100%"
+          flexDirection="row"
         >
-          {topRow.map((f, index) => (
-            <Box
-              key={f.id}
-              flex={1}
-              height="100%"
-              display="flex"
-              flexDirection="column"
-              justifyContent="flex-start"
-              alignItems="center"
-            >
-              <FunctionBlock
-                index={index}
-                id={f.id}
-                cognitiveFunction={f.type as CognitiveFunction}
-              />
-              <Typography variant="caption" color="gray">
-                {labelFor(index)}
-              </Typography>
-            </Box>
-          ))}
-        </SortableContext>
-      </Box>
-      <Typography variant="h6" align="center" marginTop={2}>
-        {stackType ?? "No match for any MBTI type :("}
-      </Typography>
+          <SortableContext
+            items={topRow.map((f) => f.id)}
+            strategy={horizontalListSortingStrategy}
+          >
+            {topRow.map((f, index) => (
+              <Box
+                key={f.id}
+                flex={1}
+                height="100%"
+                display="flex"
+                flexDirection="column"
+                justifyContent="flex-start"
+                alignItems="center"
+              >
+                <FunctionBlock
+                  index={index}
+                  id={f.id}
+                  cognitiveFunction={f.type as CognitiveFunction}
+                />
+                <Typography variant="caption" color="gray">
+                  {labelFor(index)}
+                </Typography>
+              </Box>
+            ))}
+          </SortableContext>
+        </Box>
+        <Typography variant="h2" align="center" marginTop={2}>
+          {stackType ?? "No match for any MBTI type :("}
+        </Typography>
+        <Typography variant="caption" align="center">
+          Right now this is a bit crappy and broken.
+        </Typography>
+        <Typography variant="caption" align="center">
+          The last 4 functions don't get sorted automatically so they should not
+          be considered part of the stack.
+        </Typography>
+      </Stack>
     </DndContext>
   );
 };
