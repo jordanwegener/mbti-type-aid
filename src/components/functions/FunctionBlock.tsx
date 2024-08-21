@@ -9,11 +9,13 @@ import { CSS } from "@dnd-kit/utilities";
 
 export interface FunctionProps {
   id: string;
+  index: number;
   cognitiveFunction: CognitiveFunction;
 }
 
 export const FunctionBlock: React.FC<FunctionProps> = ({
   id,
+  index,
   cognitiveFunction
 }: FunctionProps) => {
   const text = cognitiveFunction.toString();
@@ -23,7 +25,8 @@ export const FunctionBlock: React.FC<FunctionProps> = ({
 
   const style = {
     transition,
-    transform: CSS.Transform.toString(transform)
+    transform: CSS.Transform.toString(transform),
+    opacity: index > 3 ? 0.5 : 1,  // Dim if index > 3
   };
 
   return (

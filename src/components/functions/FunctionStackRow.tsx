@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Box, Typography } from "@mui/material";
 import { FunctionBlock } from "./FunctionBlock";
 import {
@@ -9,19 +9,26 @@ import {
 import { DndContext } from "@dnd-kit/core";
 import { CognitiveFunction } from "@domain/function/function";
 import { defaultCogFuncs } from "@data/cognitiveFunctions";
+import { getStackType } from "@data/stack";
 
 export const FunctionStackRow = () => {
   const [topRow, setTopRow] = React.useState(defaultCogFuncs);
+  
+  // Extract the top 4 functions and convert to a string
+  const stackString = topRow.slice(0, 4).map((f) => f.type).join(",");
+  
+  // Get the stack type if the top 4 functions form a valid MBTI stack
+  const stackType = getStackType(stackString);
 
   const mirrorFunctionMap = {
-    Fi: "Ti",
-    Ti: "Fi",
-    Fe: "Te",
-    Te: "Fe",
-    Ni: "Si",
-    Si: "Ni",
-    Ne: "Se",
-    Se: "Ne"
+    Fi: "Te",
+    Te: "Fi",
+    Fe: "Ti",
+    Ti: "Fe",
+    Ni: "Se",
+    Se: "Ni",
+    Ne: "Si",
+    Si: "Ne"
   };
 
   const labelFor = (index) => {
@@ -47,47 +54,39 @@ export const FunctionStackRow = () => {
     }
   };
 
-  const swapConflictingFunction = (stack, newIndex) => {
-    let updatedStack = [...stack];
-    const newFunction = updatedStack[newIndex];
-    const mirrorFunctionType = mirrorFunctionMap[newFunction.type];
-
-    // Check if there's a conflict in the first four positions
-    const conflictIndex = updatedStack.slice(0, 4).findIndex(
-      (item) => item.type === mirrorFunctionType
-    );
-
-    if (conflictIndex !== -1) {
-      // Swap the conflicting function with the one being dragged
-      [updatedStack[conflictIndex], updatedStack[newIndex]] = [updatedStack[newIndex], updatedStack[conflictIndex]];
+  const mirrorLastFourFunctions = (stack) => {
+    const updatedStack = [...stack];
+    for (let i = 0; i < 4; i++) {
+      const functionType = updatedStack[i].type;
+      const mirrorType = mirrorFunctionMap[functionType];
+      const mirrorIndex = updatedStack.findIndex((f) => f.type === mirrorType);
+      
+      // Move the mirrored function to its correct position
+      const [mirroredFunction] = updatedStack.splice(mirrorIndex, 1);
+      updatedStack.splice(i + 4, 0, mirroredFunction);
     }
-
     return updatedStack;
   };
 
   const onDragEnd = ({ active, over }) => {
-    if (!over) {
-      return;
-    }
+    if (!over) return;
 
     if (active.id !== over.id) {
       setTopRow((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
-
-        // Move the dragged function to its new position
         let newStack = arrayMove(items, oldIndex, newIndex);
-
-        // Ensure that if a conflicting function is dragged into the top 4,
-        // it swaps with its counterpart.
-        if (newIndex < 4) {
-          newStack = swapConflictingFunction(newStack, newIndex);
-        }
 
         return newStack;
       });
     }
   };
+
+  // useEffect(() => {
+  //   if(stackType) {
+  //     setTopRow(mirrorLastFourFunctions(topRow));
+  //   }
+  // }, [stackType]);
 
   return (
     <DndContext onDragEnd={onDragEnd}>
@@ -106,15 +105,16 @@ export const FunctionStackRow = () => {
         >
           {topRow.map((f, index) => (
             <Box
-              key={f.id}  // Move key to the outer Box to avoid React key issues
+              key={f.id}
               flex={1}
-              height={"100%"}
+              height="100%"
               display="flex"
               flexDirection="column"
               justifyContent="flex-start"
-              alignItems="flex-start"
+              alignItems="center"
             >
               <FunctionBlock
+                index={index}
                 id={f.id}
                 cognitiveFunction={f.type as CognitiveFunction}
               />
@@ -125,6 +125,9 @@ export const FunctionStackRow = () => {
           ))}
         </SortableContext>
       </Box>
+      <Typography variant="h6" align="center" marginTop={2}>
+        {stackType ?? "No match for any MBTI type :("}
+      </Typography>
     </DndContext>
   );
 };
