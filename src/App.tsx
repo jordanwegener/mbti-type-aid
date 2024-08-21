@@ -10,7 +10,7 @@ import {
   Typography
 } from "@mui/material";
 import { Brightness4, Brightness7 } from "@mui/icons-material";
-import { StackConstructorDndKit } from "./components/playground/StackConstructorDndKit";
+import { StackConstructor } from "./components/playground/StackConstructor";
 
 const App = () => {
   const [darkMode, setDarkMode] = useState(true);
@@ -45,7 +45,7 @@ const App = () => {
         <Typography variant="h3" component="h1">
           Build a cognitive stack
         </Typography>
-        <StackConstructorDndKit />
+        <StackConstructor />
       </Box>
     </ThemeProvider>
   );
