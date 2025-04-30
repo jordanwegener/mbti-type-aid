@@ -11,5 +11,6 @@ export default defineConfig({
       "@domain": "/src/domain",
       "@data": "/src/data"
     }
-  }
+  },
+  base: '/mbti-type-aid/',
 });
