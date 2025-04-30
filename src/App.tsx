@@ -42,8 +42,8 @@ const App = () => {
         </Toolbar>
       </AppBar>
       <Box display="flex" flexDirection="column" gap={4} width="100%" p={2}>
-        <Typography variant="h3" component="h1">
-          Build a cognitive stack
+        <Typography variant="h5" component="h1">
+          Drag and drop from Available Functions to build your stack. If what you build is a valid MBTI stack it'll appear below.
         </Typography>
         <StackConstructor />
       </Box>

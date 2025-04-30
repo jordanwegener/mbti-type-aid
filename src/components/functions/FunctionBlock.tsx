@@ -1,50 +1,73 @@
 import React from "react";
-import { Box, Tooltip, Typography, useTheme } from "@mui/material";
-import {
-  CognitiveFunction,
-  CognitiveFunctionInfo
-} from "@domain/function/function";
+import { Paper, Typography, Tooltip } from "@mui/material";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { CognitiveFunction, CognitiveFunctionInfo } from "../../domain/function/function";
 
-export interface FunctionProps {
+interface FunctionBlockProps {
   id: string;
-  index: number;
   cognitiveFunction: CognitiveFunction;
+  disabled?: boolean;
 }
 
-export const FunctionBlock: React.FC<FunctionProps> = ({
-  id,
-  index,
-  cognitiveFunction
-}: FunctionProps) => {
-  const text = cognitiveFunction.toString();
-  const toolTipText = CognitiveFunctionInfo[cognitiveFunction].description;
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id });
+export const FunctionBlock: React.FC<FunctionBlockProps> = ({ 
+  id, 
+  cognitiveFunction,
+  disabled = false 
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ 
+    id,
+    disabled 
+  });
 
   const style = {
-    transition,
     transform: CSS.Transform.toString(transform),
-    opacity: index > 3 ? 0.5 : 1,  // Dim if index > 3
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    cursor: disabled ? "default" : "grab"
   };
 
+  const functionInfo = CognitiveFunctionInfo[cognitiveFunction];
+
   return (
-    <Box
-      ref={setNodeRef}
-      width={80}
-      padding={1}
-      margin={1}
-      border={2}
-      borderRadius={2}
-      boxShadow={2}
-      {...attributes}
-      {...listeners}
-      style={style}
+    <Tooltip 
+      title={
+        <div>
+          <Typography variant="subtitle2" gutterBottom>
+            {functionInfo.name}
+          </Typography>
+          <Typography variant="body2">
+            {functionInfo.description}
+          </Typography>
+        </div>
+      }
+      enterDelay={2000}
+      placement="top"
+      arrow
     >
-      <Tooltip title={toolTipText} arrow enterDelay={500}>
-        <Typography variant="h6">{text}</Typography>
-      </Tooltip>
-    </Box>
+      <Paper
+        ref={setNodeRef}
+        {...attributes}
+        {...(disabled ? {} : listeners)}
+        elevation={2}
+        sx={{
+          p: 2,
+          backgroundColor: disabled ? "action.disabledBackground" : "background.paper",
+          minWidth: 80,
+          textAlign: "center",
+          userSelect: "none",
+          ...style
+        }}
+      >
+        <Typography variant="h6">{cognitiveFunction}</Typography>
+      </Paper>
+    </Tooltip>
   );
 };

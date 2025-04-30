@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { Box, Stack, Typography } from "@mui/material";
+import React, { useEffect, useCallback } from "react";
+import { Box, Stack, Typography, Button } from "@mui/material";
 import { FunctionBlock } from "./FunctionBlock";
 import {
   horizontalListSortingStrategy,
@@ -11,11 +11,17 @@ import { CognitiveFunction } from "@domain/function/function";
 import { defaultCogFuncs } from "@data/cognitiveFunctions";
 import { getStackType } from "@data/stack";
 
+interface CognitiveItem {
+  id: string;
+  type: CognitiveFunction;
+}
+
 export const FunctionStackRow = () => {
-  const [topRow, setTopRow] = React.useState(defaultCogFuncs);
+  const [stack, setStack] = React.useState<CognitiveItem[]>(defaultCogFuncs);
+  const [isAutoMirror, setIsAutoMirror] = React.useState(true);
 
   // Extract the top 4 functions and convert to a string
-  const stackString = topRow
+  const stackString = stack
     .slice(0, 4)
     .map((f) => f.type)
     .join(",");
@@ -23,18 +29,18 @@ export const FunctionStackRow = () => {
   // Get the stack type if the top 4 functions form a valid MBTI stack
   const stackType = getStackType(stackString);
 
-  const mirrorFunctionMap = {
-    Fi: "Te",
-    Te: "Fi",
-    Fe: "Ti",
-    Ti: "Fe",
-    Ni: "Se",
-    Se: "Ni",
-    Ne: "Si",
-    Si: "Ne"
+  const mirrorFunctionMap: Record<CognitiveFunction, CognitiveFunction> = {
+    [CognitiveFunction.Fi]: CognitiveFunction.Te,
+    [CognitiveFunction.Te]: CognitiveFunction.Fi,
+    [CognitiveFunction.Fe]: CognitiveFunction.Ti,
+    [CognitiveFunction.Ti]: CognitiveFunction.Fe,
+    [CognitiveFunction.Ni]: CognitiveFunction.Se,
+    [CognitiveFunction.Se]: CognitiveFunction.Ni,
+    [CognitiveFunction.Ne]: CognitiveFunction.Si,
+    [CognitiveFunction.Si]: CognitiveFunction.Ne
   };
 
-  const labelFor = (index) => {
+  const labelFor = (index: number): string => {
     switch (index) {
       case 0:
         return "Dominant";
@@ -57,43 +63,72 @@ export const FunctionStackRow = () => {
     }
   };
 
-  const mirrorLastFourFunctions = (stack) => {
-    const updatedStack = [...stack];
-    for (let i = 0; i < 4; i++) {
-      const functionType = updatedStack[i].type;
-      const mirrorType = mirrorFunctionMap[functionType];
-      const mirrorIndex = updatedStack.findIndex((f) => f.type === mirrorType);
+  const mirrorLastFourFunctions = useCallback(
+    (currentStack: CognitiveItem[]): CognitiveItem[] => {
+      const updatedStack = [...currentStack];
+      // Mirror each of the first 4 functions to create the shadow functions
+      for (let i = 0; i < 4; i++) {
+        const functionType = updatedStack[i].type;
+        const mirrorType = mirrorFunctionMap[functionType];
 
-      // Move the mirrored function to its correct position
-      const [mirroredFunction] = updatedStack.splice(mirrorIndex, 1);
-      updatedStack.splice(i + 4, 0, mirroredFunction);
-    }
-    return updatedStack;
-  };
+        // Find the mirrored function in the remaining stack
+        const mirrorIndex = updatedStack.findIndex(
+          (f) => f.type === mirrorType
+        );
+
+        if (mirrorIndex !== -1) {
+          // Move the mirrored function to its correct shadow position
+          const [mirroredFunction] = updatedStack.splice(mirrorIndex, 1);
+          updatedStack.splice(i + 4, 0, mirroredFunction);
+        }
+      }
+      return updatedStack;
+    },
+    [mirrorFunctionMap]
+  );
 
   const onDragEnd = ({ active, over }) => {
-    if (!over) return;
+    if (!over || active.id === over.id) return;
 
-    if (active.id !== over.id) {
-      setTopRow((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        let newStack = arrayMove(items, oldIndex, newIndex);
+    setStack((items) => {
+      const oldIndex = items.findIndex((item) => item.id === active.id);
+      const newIndex = items.findIndex((item) => item.id === over.id);
+      const newStack = arrayMove(items, oldIndex, newIndex);
 
-        return newStack;
-      });
+      // If auto-mirror is enabled and we moved one of the first 4 functions,
+      // automatically update the shadow functions
+      if (isAutoMirror && (oldIndex < 4 || newIndex < 4)) {
+        return mirrorLastFourFunctions(newStack);
+      }
+
+      return newStack;
+    });
+  };
+
+  // Reset the stack to default
+  const handleReset = () => {
+    setStack(defaultCogFuncs);
+  };
+
+  // Toggle auto-mirroring
+  const toggleAutoMirror = () => {
+    setIsAutoMirror(!isAutoMirror);
+    if (!isAutoMirror) {
+      // If we're enabling auto-mirror, immediately mirror the functions
+      setStack((current) => mirrorLastFourFunctions(current));
     }
   };
 
-  // useEffect(() => {
-  //   if(stackType) {
-  //     setTopRow(mirrorLastFourFunctions(topRow));
-  //   }
-  // }, [stackType]);
+  // Effect to handle initial mirroring and updates when auto-mirror is enabled
+  useEffect(() => {
+    if (isAutoMirror && stackType) {
+      setStack((current) => mirrorLastFourFunctions(current));
+    }
+  }, [stackType, isAutoMirror, mirrorLastFourFunctions]);
 
   return (
     <DndContext onDragEnd={onDragEnd}>
-      <Stack spacing={1}>
+      <Stack spacing={2}>
         <Box
           display="flex"
           alignItems="center"
@@ -103,10 +138,10 @@ export const FunctionStackRow = () => {
           flexDirection="row"
         >
           <SortableContext
-            items={topRow.map((f) => f.id)}
+            items={stack.map((f) => f.id)}
             strategy={horizontalListSortingStrategy}
           >
-            {topRow.map((f, index) => (
+            {stack.map((f, index) => (
               <Box
                 key={f.id}
                 flex={1}
@@ -115,29 +150,49 @@ export const FunctionStackRow = () => {
                 flexDirection="column"
                 justifyContent="flex-start"
                 alignItems="center"
+                sx={{
+                  opacity: index < 4 ? 1 : 0.7,
+                  transition: "opacity 0.2s"
+                }}
               >
                 <FunctionBlock
                   index={index}
                   id={f.id}
-                  cognitiveFunction={f.type as CognitiveFunction}
+                  cognitiveFunction={f.type}
                 />
-                <Typography variant="caption" color="gray">
+                <Typography
+                  variant="caption"
+                  color={index < 4 ? "primary" : "text.secondary"}
+                >
                   {labelFor(index)}
                 </Typography>
               </Box>
             ))}
           </SortableContext>
         </Box>
-        <Typography variant="h2" align="center" marginTop={2}>
-          {stackType ?? "No match for any MBTI type :("}
+
+        <Stack direction="row" spacing={2} justifyContent="center">
+          <Button variant="outlined" onClick={handleReset} color="primary">
+            Reset Stack
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={toggleAutoMirror}
+            color={isAutoMirror ? "success" : "primary"}
+          >
+            {isAutoMirror ? "Auto-Mirror On" : "Auto-Mirror Off"}
+          </Button>
+        </Stack>
+
+        <Typography variant="h4" align="center" marginTop={2}>
+          {stackType ? `Type: ${stackType}` : "No valid MBTI type match"}
         </Typography>
-        <Typography variant="caption" align="center">
-          Right now this is a bit crappy and broken.
-        </Typography>
-        <Typography variant="caption" align="center">
-          The last 4 functions don't get sorted automatically so they should not
-          be considered part of the stack.
-        </Typography>
+
+        {!stackType && (
+          <Typography variant="body2" color="text.secondary" align="center">
+            Arrange the top 4 functions to match a valid MBTI type
+          </Typography>
+        )}
       </Stack>
     </DndContext>
   );

@@ -2,10 +2,9 @@ import React, { useState } from "react";
 import { Box, Stack, Typography, Button } from "@mui/material";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { CognitiveFunction } from "@domain/function/function";
-import { getStackType, MBTIType, getTypeInfo } from "@data/stack";
-import { FunctionPool } from "../functions/FunctionPool";
-import { FunctionSlot } from "../functions/FunctionSlot";
-import { TypeInfoModal } from '../modals/TypeInfoModal';
+import { getStackType } from "@data/stack";
+import { FunctionPool } from "./FunctionPool";
+import { FunctionSlot } from "./FunctionSlot";
 
 interface CognitiveItem {
   id: string;
@@ -62,8 +61,6 @@ export const StackConstructor: React.FC = () => {
     .map((f) => f.type)
     .join(",");
   const stackType = getStackType(stackString);
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -128,119 +125,46 @@ export const StackConstructor: React.FC = () => {
     setStackSlots([null, null, null, null]);
   };
 
-  const handleRemoveFromSlot = (functionId: string) => {
-    setStackSlots((slots) => {
-      const newSlots = [...slots];
-      const slotIndex = slots.findIndex((slot) => slot?.id === functionId);
-      if (slotIndex !== -1) {
-        const removedFunction = slots[slotIndex]!;
-        newSlots[slotIndex] = null;
-        setPoolFunctions((pool) => [...pool, removedFunction]);
-      }
-      return newSlots;
-    });
-  };
-
   return (
     <DndContext onDragEnd={handleDragEnd}>
       <Stack spacing={4}>
-        <Typography variant="h4" align="center">
-          Build Your Cognitive Stack
-        </Typography>
+        <Box display="flex" gap={2} justifyContent="center">
+          <Stack spacing={2}>
+            {/* Primary Functions */}
+            {stackSlots.map((func, index) => (
+              <FunctionSlot
+                key={`slot-${index + 1}`}
+                id={`slot-${index + 1}`}
+                label={SLOT_LABELS.primary[index]}
+                function={func}
+              />
+            ))}
+          </Stack>
 
-        <Stack spacing={3}>
-          {/* Primary Functions Row */}
-          <Box>
-            <Typography variant="h6" align="center" gutterBottom>
-              Primary Functions
-            </Typography>
-            <Box
-              display="flex"
-              gap={2}
-              justifyContent="center"
-              sx={{ overflowX: "auto", pb: 1 }}
-            >
-              {stackSlots.map((func, index) => (
-                <FunctionSlot
-                  key={`slot-${index + 1}`}
-                  id={`slot-${index + 1}`}
-                  label={SLOT_LABELS.primary[index]}
-                  function={func}
-                  onRemove={handleRemoveFromSlot}
-                />
-              ))}
-            </Box>
-          </Box>
-
-          {/* Shadow Functions Row */}
-          <Box>
-            <Typography
-              variant="h6"
-              align="center"
-              gutterBottom
-              color="text.secondary"
-            >
-              Shadow Functions (Auto-Mirrored)
-            </Typography>
-            <Box
-              display="flex"
-              gap={2}
-              justifyContent="center"
-              sx={{ overflowX: "auto", pb: 1 }}
-            >
-              {shadowFunctions.map((func, index) => (
-                <FunctionSlot
-                  key={`shadow-${index + 1}`}
-                  id={`shadow-${index + 1}`}
-                  label={SLOT_LABELS.shadow[index]}
-                  function={func}
-                  isShadow
-                />
-              ))}
-            </Box>
-          </Box>
-        </Stack>
-
-        <FunctionPool 
-          availableFunctions={poolFunctions} 
-          onReset={handleReset}
-        />
-
-        <Box textAlign="center">
-          <Typography 
-            variant="h5" 
-            gutterBottom
-            sx={{ 
-              opacity: stackType ? 1 : 0.3,
-              transition: 'opacity 0.2s'
-            }}
-          >
-            {stackType 
-              ? `${stackType} - ${getTypeInfo(stackType).nickname}`
-              : "No type matched"
-            }
-          </Typography>
-          <Button
-            variant="outlined"
-            onClick={() => setIsModalOpen(true)}
-            sx={{ 
-              opacity: stackType ? 1 : 0,
-              pointerEvents: stackType ? 'auto' : 'none',
-              transition: 'opacity 0.2s',
-              visibility: stackType ? 'visible' : 'hidden'
-            }}
-            color="primary"
-          >
-            View Type Details
-          </Button>
+          <Stack spacing={2}>
+            {/* Shadow Functions */}
+            {shadowFunctions.map((func, index) => (
+              <FunctionSlot
+                key={`shadow-${index + 1}`}
+                id={`shadow-${index + 1}`}
+                label={SLOT_LABELS.shadow[index]}
+                function={func}
+                isShadow
+              />
+            ))}
+          </Stack>
         </Box>
 
-        <TypeInfoModal
-          open={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          type={stackType}
-          typeInfo={stackType ? getTypeInfo(stackType) : undefined}
-        />
+        <FunctionPool availableFunctions={poolFunctions} />
+
+        <Box textAlign="center">
+          <Typography variant="h5" gutterBottom>
+            {stackType ? `Type: ${stackType}` : "Complete your primary stack"}
+          </Typography>
+          <Button variant="outlined" onClick={handleReset} sx={{ mt: 2 }}>
+            Reset
+          </Button>
+        </Box>
       </Stack>
     </DndContext>
   );
