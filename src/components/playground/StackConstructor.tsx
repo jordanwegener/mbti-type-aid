@@ -106,6 +106,28 @@ export const StackConstructor: React.FC = () => {
     return findStackMatches(userStack);
   }, [stackSlots]);
 
+  // Calculate which functions are disabled in the pool
+  const disabledPoolFunctions = useMemo(() => {
+    const currentStackTypes = stackSlots.map(slot => slot?.type || null);
+    const disabled = new Set<CognitiveFunction>();
+    
+    poolFunctions.forEach(poolFunc => {
+      // Check if this function can be placed in ANY slot
+      let canPlaceAnywhere = false;
+      for (let i = 0; i < 4; i++) {
+        if (canPlaceFunction(currentStackTypes, poolFunc.type, i)) {
+          canPlaceAnywhere = true;
+          break;
+        }
+      }
+      if (!canPlaceAnywhere) {
+        disabled.add(poolFunc.type);
+      }
+    });
+    
+    return disabled;
+  }, [stackSlots, poolFunctions]);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -289,6 +311,8 @@ export const StackConstructor: React.FC = () => {
         <FunctionPool 
           availableFunctions={poolFunctions} 
           onReset={handleReset}
+          disabledFunctions={disabledPoolFunctions}
+          currentStack={stackSlots.map(slot => slot?.type || null)}
         />
 
         <Stack spacing={3}>

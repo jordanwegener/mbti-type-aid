@@ -8,12 +8,14 @@ interface FunctionBlockProps {
   id: string;
   cognitiveFunction: CognitiveFunction;
   disabled?: boolean;
+  disabledReason?: string;
 }
 
 export const FunctionBlock: React.FC<FunctionBlockProps> = ({ 
   id, 
   cognitiveFunction,
-  disabled = false 
+  disabled = false,
+  disabledReason 
 }) => {
   const {
     attributes,
@@ -30,25 +32,39 @@ export const FunctionBlock: React.FC<FunctionBlockProps> = ({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
-    cursor: disabled ? "default" : "grab"
+    opacity: isDragging ? 0.5 : disabled ? 0.4 : 1,
+    cursor: disabled ? "not-allowed" : "grab"
   };
 
   const functionInfo = CognitiveFunctionInfo[cognitiveFunction];
 
+  const tooltipContent = disabled && disabledReason ? (
+    <div>
+      <Typography variant="subtitle2" gutterBottom color="error">
+        Cannot place {cognitiveFunction}
+      </Typography>
+      <Typography variant="body2" gutterBottom>
+        {disabledReason}
+      </Typography>
+      <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
+        {functionInfo.name}
+      </Typography>
+    </div>
+  ) : (
+    <div>
+      <Typography variant="subtitle2" gutterBottom>
+        {functionInfo.name}
+      </Typography>
+      <Typography variant="body2">
+        {functionInfo.description}
+      </Typography>
+    </div>
+  );
+
   return (
     <Tooltip 
-      title={
-        <div>
-          <Typography variant="subtitle2" gutterBottom>
-            {functionInfo.name}
-          </Typography>
-          <Typography variant="body2">
-            {functionInfo.description}
-          </Typography>
-        </div>
-      }
-      enterDelay={2000}
+      title={tooltipContent}
+      enterDelay={disabled ? 1000 : 2000}
       placement="top"
       arrow
     >
@@ -63,6 +79,11 @@ export const FunctionBlock: React.FC<FunctionBlockProps> = ({
           minWidth: 80,
           textAlign: "center",
           userSelect: "none",
+          border: disabled ? "2px solid transparent" : "none",
+          '&:hover': disabled ? {
+            borderColor: 'error.main',
+            backgroundColor: 'error.light'
+          } : {},
           ...style
         }}
       >

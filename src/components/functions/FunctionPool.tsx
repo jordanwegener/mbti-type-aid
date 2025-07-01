@@ -4,6 +4,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import { useDroppable } from "@dnd-kit/core";
 import { CognitiveFunction } from "@domain/function/function";
 import { FunctionBlock } from "./FunctionBlock";
+import { getDisabledReason } from "@utils/disabledReasons";
 
 interface FunctionPoolProps {
   availableFunctions: Array<{
@@ -11,11 +12,15 @@ interface FunctionPoolProps {
     type: CognitiveFunction;
   }>;
   onReset: () => void;
+  disabledFunctions?: Set<CognitiveFunction>;
+  currentStack?: (CognitiveFunction | null)[];
 }
 
 export const FunctionPool: React.FC<FunctionPoolProps> = ({ 
   availableFunctions,
-  onReset
+  onReset,
+  disabledFunctions = new Set(),
+  currentStack = [null, null, null, null]
 }) => {
   const { setNodeRef } = useDroppable({
     id: "function-pool"
@@ -62,13 +67,20 @@ export const FunctionPool: React.FC<FunctionPoolProps> = ({
             Drop functions here to return them to the pool
           </Typography>
         ) : (
-          availableFunctions.map((func) => (
-            <FunctionBlock
-              key={func.id}
-              id={func.id}
-              cognitiveFunction={func.type}
-            />
-          ))
+          availableFunctions.map((func) => {
+            const isDisabled = disabledFunctions.has(func.type);
+            const disabledReason = isDisabled ? getDisabledReason(currentStack, func.type) : undefined;
+            
+            return (
+              <FunctionBlock
+                key={func.id}
+                id={func.id}
+                cognitiveFunction={func.type}
+                disabled={isDisabled}
+                disabledReason={disabledReason}
+              />
+            );
+          })
         )}
       </Paper>
     </Box>
