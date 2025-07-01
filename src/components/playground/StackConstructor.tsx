@@ -32,14 +32,14 @@ interface CognitiveItem {
 }
 
 const initialFunctions: CognitiveItem[] = [
-  { id: "Fi", type: CognitiveFunction.Fi },
-  { id: "Fe", type: CognitiveFunction.Fe },
-  { id: "Ti", type: CognitiveFunction.Ti },
-  { id: "Te", type: CognitiveFunction.Te },
-  { id: "Si", type: CognitiveFunction.Si },
-  { id: "Se", type: CognitiveFunction.Se },
-  { id: "Ni", type: CognitiveFunction.Ni },
-  { id: "Ne", type: CognitiveFunction.Ne }
+  { id: "pool-Fi", type: CognitiveFunction.Fi },
+  { id: "pool-Fe", type: CognitiveFunction.Fe },
+  { id: "pool-Ti", type: CognitiveFunction.Ti },
+  { id: "pool-Te", type: CognitiveFunction.Te },
+  { id: "pool-Si", type: CognitiveFunction.Si },
+  { id: "pool-Se", type: CognitiveFunction.Se },
+  { id: "pool-Ni", type: CognitiveFunction.Ni },
+  { id: "pool-Ne", type: CognitiveFunction.Ne }
 ];
 
 const mirrorFunctionMap: Record<CognitiveFunction, CognitiveFunction> = {
@@ -57,6 +57,12 @@ const SLOT_LABELS = {
   primary: ["Dominant", "Auxiliary", "Tertiary", "Inferior"],
   shadow: ["Opposing", "Critical Parent", "Deceiving", "Demonstrative"]
 };
+
+// Helper function to create unique function items
+const createFunctionItem = (type: CognitiveFunction, context: 'pool' | 'slot' = 'pool'): CognitiveItem => ({
+  id: `${context}-${type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+  type
+});
 
 export const StackConstructor: React.FC = () => {
   const [poolFunctions, setPoolFunctions] =
@@ -115,16 +121,18 @@ export const StackConstructor: React.FC = () => {
 
     // Handle dropping back to pool
     if (overId === "function-pool") {
-      setStackSlots((slots) => {
-        const newSlots = [...slots];
-        const slotIndex = slots.findIndex((slot) => slot?.id === activeId);
-        if (slotIndex !== -1) {
-          const removedFunction = slots[slotIndex]!;
+      const slotIndex = stackSlots.findIndex((slot) => slot?.id === activeId);
+      if (slotIndex !== -1) {
+        const removedFunction = stackSlots[slotIndex]!;
+        
+        // Update both states cleanly
+        setStackSlots((slots) => {
+          const newSlots = [...slots];
           newSlots[slotIndex] = null;
-          setPoolFunctions((pool) => [...pool, removedFunction]);
-        }
-        return newSlots;
-      });
+          return newSlots;
+        });
+        setPoolFunctions((pool) => [...pool, createFunctionItem(removedFunction.type, 'pool')]);
+      }
       return;
     }
 
@@ -148,19 +156,24 @@ export const StackConstructor: React.FC = () => {
       // Find if function is coming from pool
       const poolIndex = poolFunctions.findIndex((f) => f.id === activeId);
       if (poolIndex !== -1) {
-        // Coming from pool
+        // Coming from pool - handle both state updates together
         const functionToMove = poolFunctions[poolIndex];
+        const currentSlotFunction = stackSlots[slotIndex];
+        
+        // Update pool functions
         const newPoolFunctions = [...poolFunctions];
         newPoolFunctions.splice(poolIndex, 1);
+        
+        // If there was a function in the target slot, add it back to pool
+        if (currentSlotFunction) {
+          newPoolFunctions.push(createFunctionItem(currentSlotFunction.type, 'pool'));
+        }
+        
+        // Update both states
         setPoolFunctions(newPoolFunctions);
-
         setStackSlots((slots) => {
           const newSlots = [...slots];
-          // If there was a function in the target slot, move it back to pool
-          if (newSlots[slotIndex]) {
-            setPoolFunctions((pool) => [...pool, newSlots[slotIndex]!]);
-          }
-          newSlots[slotIndex] = functionToMove;
+          newSlots[slotIndex] = createFunctionItem(functionToMove.type, 'slot');
           return newSlots;
         });
       }
@@ -173,16 +186,17 @@ export const StackConstructor: React.FC = () => {
   };
 
   const handleRemoveFromSlot = (functionId: string) => {
-    setStackSlots((slots) => {
-      const newSlots = [...slots];
-      const slotIndex = slots.findIndex((slot) => slot?.id === functionId);
-      if (slotIndex !== -1) {
-        const removedFunction = slots[slotIndex]!;
+    const slotIndex = stackSlots.findIndex((slot) => slot?.id === functionId);
+    if (slotIndex !== -1) {
+      const removedFunction = stackSlots[slotIndex]!;
+      
+      setStackSlots((slots) => {
+        const newSlots = [...slots];
         newSlots[slotIndex] = null;
-        setPoolFunctions((pool) => [...pool, removedFunction]);
-      }
-      return newSlots;
-    });
+        return newSlots;
+      });
+      setPoolFunctions((pool) => [...pool, createFunctionItem(removedFunction.type, 'pool')]);
+    }
   };
 
   // Create slot IDs for sortable context
