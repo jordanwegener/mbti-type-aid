@@ -8,6 +8,7 @@ import { CognitiveFunction } from "@domain/function/function";
 import { FunctionBlock } from "./FunctionBlock";
 import { PrimaryPositionInfo, ShadowPositionInfo } from "../../data/positionInfo";
 import { PositionInfoModal } from "../modals/PositionInfoModal";
+import { designTokens } from "../../theme";
 
 interface SortableFunctionSlotProps {
   id: string;
@@ -45,7 +46,7 @@ export const SortableFunctionSlot: React.FC<SortableFunctionSlotProps> = ({
     isOver
   } = useSortable({
     id,
-    disabled: isShadow || !func || isOverlay, // Only allow dragging if there's a function and it's not shadow or overlay
+    disabled: isShadow || isOverlay, // Enable dragging for slots with or without functions, except shadows
     data: {
       type: 'slot',
       function: func
@@ -67,8 +68,9 @@ export const SortableFunctionSlot: React.FC<SortableFunctionSlotProps> = ({
       ref={setNodeRef} 
       style={style} 
       sx={{ 
-        minWidth: 150, 
+        width: designTokens.slots.width,
         textAlign: "center",
+        flexShrink: 0,
         ...(isOver && !isShadow && {
           transform: 'scale(1.05)',
           transition: 'transform 0.2s ease',
@@ -119,32 +121,82 @@ export const SortableFunctionSlot: React.FC<SortableFunctionSlotProps> = ({
       </Box>
       
       <Paper
+        elevation={func ? 3 : 1}
         sx={{
-          p: 2,
-          minHeight: 100,
+          p: designTokens.spacing.lg / 8,
+          height: designTokens.slots.height,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
           backgroundColor: isShadow ? "action.disabledBackground" : "background.paper",
-          border: "2px dashed",
+          border: func ? "2px solid" : "2px dashed",
           borderColor: isInvalidDrop ? "error.main" : 
                       canAcceptDrop && isOver && !isShadow ? "success.main" :
                       func ? "primary.main" : "divider",
+          borderRadius: designTokens.borderRadius.lg / 8,
           opacity: isShadow ? 0.7 : 1,
           position: "relative",
-          cursor: func && !isShadow && !isOverlay ? 'grab' : 'default',
-          '&:hover': {
-            borderColor: func && !isShadow && !isOverlay ? 'primary.dark' : undefined,
-          },
+          cursor: func && !isShadow && !isOverlay ? 'grab' : !isShadow ? 'copy' : 'default',
+          background: func && !isShadow ? (theme) => 
+            theme.palette.mode === 'dark' 
+              ? `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.primary.dark}15 100%)`
+              : `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.primary.light}10 100%)`
+            : undefined,
+          transition: designTokens.transitions.normal,
+          '&::before': isInvalidDrop ? {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(244, 67, 54, 0.1)',
+            animation: 'pulse 1s infinite',
+            '@keyframes pulse': {
+              '0%': { opacity: 0.1 },
+              '50%': { opacity: 0.2 },
+              '100%': { opacity: 0.1 }
+            }
+          } : {},
+          '&:hover': func && !isShadow ? {
+            borderColor: 'primary.dark',
+            transform: 'translateY(-2px)',
+            boxShadow: (theme) => 
+              theme.palette.mode === 'dark' 
+                ? designTokens.shadows.dark[3]
+                : designTokens.shadows.light[3],
+          } : !func && !isShadow ? {
+            borderColor: 'primary.light',
+            backgroundColor: (theme) => 
+              theme.palette.mode === 'dark' 
+                ? 'rgba(99, 102, 241, 0.05)'
+                : 'rgba(79, 70, 229, 0.03)',
+          } : {},
           ...(isDragging && {
             cursor: 'grabbing',
-            boxShadow: 4,
+            boxShadow: (theme) => 
+              theme.palette.mode === 'dark' 
+                ? designTokens.shadows.dark[4]
+                : designTokens.shadows.light[4],
+            transform: 'rotate(3deg)',
           }),
           ...(isOverlay && {
-            boxShadow: 6,
+            boxShadow: (theme) => 
+              theme.palette.mode === 'dark' 
+                ? designTokens.shadows.dark[5]
+                : designTokens.shadows.light[5],
             borderColor: 'primary.main',
             backgroundColor: 'background.paper',
+            transform: 'rotate(-2deg)',
+          }),
+          ...(canAcceptDrop && isOver && !isShadow && {
+            transform: 'scale(1.05)',
+            borderColor: 'success.main',
+            backgroundColor: (theme) => 
+              theme.palette.mode === 'dark' 
+                ? 'rgba(76, 175, 80, 0.1)'
+                : 'rgba(76, 175, 80, 0.05)',
           })
         }}
         {...(!isOverlay ? attributes : {})}
