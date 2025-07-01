@@ -38,18 +38,18 @@ export function useAdaptiveTooltip(options: UseAdaptiveTooltipOptions = {}): Use
 
   const isTouchDevice = useIsTouchDevice();
   const [isOpen, setIsOpen] = useState(false);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const longPressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hoverTimeoutRef = useRef<number | null>(null);
+  const longPressTimeoutRef = useRef<number | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const close = useCallback(() => {
     setIsOpen(false);
     if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
+      window.clearTimeout(hoverTimeoutRef.current);
       hoverTimeoutRef.current = null;
     }
     if (longPressTimeoutRef.current) {
-      clearTimeout(longPressTimeoutRef.current);
+      window.clearTimeout(longPressTimeoutRef.current);
       longPressTimeoutRef.current = null;
     }
   }, []);
@@ -58,7 +58,7 @@ export function useAdaptiveTooltip(options: UseAdaptiveTooltipOptions = {}): Use
   const handleMouseEnter = useCallback(() => {
     if (disabled || isTouchDevice) return;
     
-    hoverTimeoutRef.current = setTimeout(() => {
+    hoverTimeoutRef.current = window.setTimeout(() => {
       setIsOpen(true);
     }, hoverDelay);
   }, [disabled, isTouchDevice, hoverDelay]);
@@ -75,16 +75,16 @@ export function useAdaptiveTooltip(options: UseAdaptiveTooltipOptions = {}): Use
     const touch = e.touches[0];
     touchStartRef.current = { x: touch.clientX, y: touch.clientY };
     
-    longPressTimeoutRef.current = setTimeout(() => {
+    longPressTimeoutRef.current = window.setTimeout(() => {
       setIsOpen(true);
     }, longPressDelay);
   }, [disabled, isTouchDevice, longPressDelay]);
 
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+  const handleTouchEnd = useCallback((_e: React.TouchEvent) => {
     if (disabled || !isTouchDevice) return;
     
     if (longPressTimeoutRef.current) {
-      clearTimeout(longPressTimeoutRef.current);
+      window.clearTimeout(longPressTimeoutRef.current);
       longPressTimeoutRef.current = null;
     }
     
@@ -104,17 +104,17 @@ export function useAdaptiveTooltip(options: UseAdaptiveTooltipOptions = {}): Use
     // Cancel long press if finger moves too much (threshold: 10px)
     if (distance > 10) {
       if (longPressTimeoutRef.current) {
-        clearTimeout(longPressTimeoutRef.current);
+        window.clearTimeout(longPressTimeoutRef.current);
         longPressTimeoutRef.current = null;
       }
     }
   }, [disabled, isTouchDevice]);
 
-  const handleTouchCancel = useCallback((e: React.TouchEvent) => {
+  const handleTouchCancel = useCallback((_e: React.TouchEvent) => {
     if (disabled || !isTouchDevice) return;
     
     if (longPressTimeoutRef.current) {
-      clearTimeout(longPressTimeoutRef.current);
+      window.clearTimeout(longPressTimeoutRef.current);
       longPressTimeoutRef.current = null;
     }
     
@@ -125,10 +125,10 @@ export function useAdaptiveTooltip(options: UseAdaptiveTooltipOptions = {}): Use
   useEffect(() => {
     return () => {
       if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
+        window.clearTimeout(hoverTimeoutRef.current);
       }
       if (longPressTimeoutRef.current) {
-        clearTimeout(longPressTimeoutRef.current);
+        window.clearTimeout(longPressTimeoutRef.current);
       }
     };
   }, []);
