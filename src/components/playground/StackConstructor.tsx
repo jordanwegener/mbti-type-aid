@@ -26,6 +26,7 @@ import { TypeInfoModal } from '../modals/TypeInfoModal';
 import { MatchingResults } from "../matching/MatchingResults";
 import { findStackMatches } from "@utils/stackMatching";
 import { canPlaceFunction, getValidFunctionsForPosition, validateStack } from "@utils/stackValidation";
+import { designTokens } from "../../theme";
 
 interface CognitiveItem {
   id: string;
@@ -145,11 +146,17 @@ export const StackConstructor: React.FC = () => {
     const poolFunction = poolFunctions.find(f => f.id === activeId);
     if (poolFunction) {
       draggedFunction = poolFunction.type;
-    } else if (activeId.startsWith('slot-')) {
-      // Check if it's from a slot
-      const slotIndex = parseInt(activeId.split('-')[1], 10) - 1;
-      if (stackSlots[slotIndex]) {
-        draggedFunction = stackSlots[slotIndex]!.type;
+    } else {
+      // Check if it's from a slot by finding the function with this ID
+      const slotFunction = stackSlots.find(slot => slot?.id === activeId);
+      if (slotFunction) {
+        draggedFunction = slotFunction.type;
+      } else if (activeId.startsWith('slot-')) {
+        // Fallback: check by slot index
+        const slotIndex = parseInt(activeId.split('-')[1], 10) - 1;
+        if (stackSlots[slotIndex]) {
+          draggedFunction = stackSlots[slotIndex]!.type;
+        }
       }
     }
     
@@ -158,9 +165,13 @@ export const StackConstructor: React.FC = () => {
       
       // If dragging from a slot, temporarily remove it from the current stack
       let testStack = [...currentStackTypes];
-      if (activeId.startsWith('slot-')) {
-        const draggedSlotIndex = parseInt(activeId.split('-')[1], 10) - 1;
+      const draggedSlotIndex = stackSlots.findIndex(slot => slot?.id === activeId);
+      if (draggedSlotIndex !== -1) {
         testStack[draggedSlotIndex] = null;
+      } else if (activeId.startsWith('slot-')) {
+        // Fallback: parse slot index
+        const slotIndex = parseInt(activeId.split('-')[1], 10) - 1;
+        testStack[slotIndex] = null;
       }
       
       // Check validation for each slot
@@ -280,8 +291,8 @@ export const StackConstructor: React.FC = () => {
     }
   };
 
-  // Create slot IDs for sortable context
-  const slotIds = stackSlots.map((_, index) => `slot-${index + 1}`);
+  // Create slot IDs for sortable context - use function ID if present, otherwise slot ID
+  const slotIds = stackSlots.map((slot, index) => slot ? slot.id : `slot-${index + 1}`);
 
   // Get the active item for drag overlay
   const activeItem = useMemo(() => {
@@ -291,7 +302,11 @@ export const StackConstructor: React.FC = () => {
     const poolItem = poolFunctions.find(f => f.id === activeId);
     if (poolItem) return poolItem;
     
-    // Check if it's from slots
+    // Check if it's from slots by function ID
+    const slotItem = stackSlots.find(slot => slot?.id === activeId);
+    if (slotItem) return slotItem;
+    
+    // Fallback: check by slot index
     if (activeId.startsWith('slot-')) {
       const slotIndex = parseInt(activeId.split('-')[1], 10) - 1;
       return stackSlots[slotIndex];
@@ -325,19 +340,27 @@ export const StackConstructor: React.FC = () => {
             <SortableContext items={slotIds} strategy={horizontalListSortingStrategy}>
               <Box
                 display="flex"
-                gap={2}
+                gap={designTokens.slots.spacing / 8}
                 justifyContent="center"
-                sx={{ overflowX: "auto", pb: 1 }}
+                sx={{ 
+                  overflowX: "auto", 
+                  pb: 1,
+                  // Use calculated width that accounts for hover scaling
+                  width: `${designTokens.slots.containerWidth}px`,
+                  maxWidth: '100%',
+                  mx: 'auto'
+                }}
               >
                 {stackSlots.map((func, index) => {
                   const slotId = `slot-${index + 1}`;
+                  const itemId = func ? func.id : slotId; // Use function ID if present, otherwise slot ID
                   const canAccept = dragValidation[slotId] !== false;
                   const isInvalid = activeId && dragValidation[slotId] === false;
                   
                   return (
                     <SortableFunctionSlot
                       key={slotId}
-                      id={slotId}
+                      id={itemId}
                       label={SLOT_LABELS.primary[index]}
                       function={func}
                       onRemove={handleRemoveFromSlot}
@@ -362,9 +385,16 @@ export const StackConstructor: React.FC = () => {
             </Typography>
             <Box
               display="flex"
-              gap={2}
+              gap={designTokens.slots.spacing / 8}
               justifyContent="center"
-              sx={{ overflowX: "auto", pb: 1 }}
+              sx={{ 
+                overflowX: "auto", 
+                pb: 1,
+                // Match the primary functions width for perfect alignment
+                width: `${designTokens.slots.containerWidth}px`,
+                maxWidth: '100%',
+                mx: 'auto'
+              }}
             >
               {shadowFunctions.map((func, index) => (
                 <SortableFunctionSlot
