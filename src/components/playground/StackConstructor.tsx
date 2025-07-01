@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Box, Stack, Typography, Button } from "@mui/material";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { CognitiveFunction } from "@domain/function/function";
@@ -6,6 +6,8 @@ import { getStackType, MBTIType, getTypeInfo } from "@data/stack";
 import { FunctionPool } from "../functions/FunctionPool";
 import { FunctionSlot } from "../functions/FunctionSlot";
 import { TypeInfoModal } from '../modals/TypeInfoModal';
+import { MatchingResults } from "../matching/MatchingResults";
+import { findStackMatches } from "@utils/stackMatching";
 
 interface CognitiveItem {
   id: string;
@@ -62,6 +64,12 @@ export const StackConstructor: React.FC = () => {
     .map((f) => f.type)
     .join(",");
   const stackType = getStackType(stackString);
+
+  // Get all potential matches ordered by score
+  const stackMatches = useMemo(() => {
+    const userStack = stackSlots.map(slot => slot?.type || null);
+    return findStackMatches(userStack);
+  }, [stackSlots]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -144,9 +152,6 @@ export const StackConstructor: React.FC = () => {
   return (
     <DndContext onDragEnd={handleDragEnd}>
       <Stack spacing={4}>
-        <Typography variant="h4" align="center">
-          Build Your Cognitive Stack
-        </Typography>
 
         <Stack spacing={3}>
           {/* Primary Functions Row */}
@@ -206,34 +211,22 @@ export const StackConstructor: React.FC = () => {
           onReset={handleReset}
         />
 
-        <Box textAlign="center">
-          <Typography 
-            variant="h5" 
-            gutterBottom
-            sx={{ 
-              opacity: stackType ? 1 : 0.3,
-              transition: 'opacity 0.2s'
-            }}
-          >
-            {stackType 
-              ? `${stackType} - ${getTypeInfo(stackType).nickname}`
-              : "No type matched"
-            }
-          </Typography>
-          <Button
-            variant="outlined"
-            onClick={() => setIsModalOpen(true)}
-            sx={{ 
-              opacity: stackType ? 1 : 0,
-              pointerEvents: stackType ? 'auto' : 'none',
-              transition: 'opacity 0.2s',
-              visibility: stackType ? 'visible' : 'hidden'
-            }}
-            color="primary"
-          >
-            View Type Details
-          </Button>
-        </Box>
+        {stackType && (
+          <Box textAlign="center" py={2} sx={{ backgroundColor: 'success.light', borderRadius: 2, mb: 2 }}>
+            <Typography variant="h5" gutterBottom sx={{ color: 'success.contrastText' }}>
+              Perfect Match: {stackType} - {getTypeInfo(stackType).nickname}
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={() => setIsModalOpen(true)}
+              color="success"
+            >
+              View Type Details
+            </Button>
+          </Box>
+        )}
+
+        <MatchingResults matches={stackMatches} />
 
         <TypeInfoModal
           open={isModalOpen}

@@ -9,7 +9,8 @@ export default defineConfig({
       "@src": "/src",
       "@components": "/src/components",
       "@domain": "/src/domain",
-      "@data": "/src/data"
+      "@data": "/src/data",
+      "@utils": "/src/utils"
     }
   },
   base: '/mbti-type-aid/',

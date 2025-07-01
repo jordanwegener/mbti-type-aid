@@ -7,13 +7,21 @@ import {
   CssBaseline,
   IconButton,
   Toolbar,
-  Typography
+  Typography,
+  Button,
+  Stack,
+  Tabs,
+  Tab
 } from "@mui/material";
-import { Brightness4, Brightness7 } from "@mui/icons-material";
+import { Brightness4, Brightness7, Build, List } from "@mui/icons-material";
 import { StackConstructor } from "./components/playground/StackConstructor";
+import { TypeList } from "./components/types/TypeList";
+
+type AppView = 'builder' | 'types';
 
 const App = () => {
   const [darkMode, setDarkMode] = useState(true);
+  const [currentView, setCurrentView] = useState<AppView>('builder');
 
   const theme = createTheme({
     palette: {
@@ -28,24 +36,56 @@ const App = () => {
     setDarkMode((prevMode) => !prevMode);
   };
 
+  const handleViewChange = (_: React.SyntheticEvent, newValue: AppView) => {
+    setCurrentView(newValue);
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h4" component="div" sx={{ flexGrow: 1 }}>
-            Cognitive Stack Builder
+            MBTI Type Aid
           </Typography>
           <IconButton color="inherit" onClick={handleThemeToggle}>
             {darkMode ? <Brightness7 /> : <Brightness4 />}
           </IconButton>
         </Toolbar>
       </AppBar>
-      <Box display="flex" flexDirection="column" gap={4} width="100%" p={2}>
-        <Typography variant="h5" component="h1">
-          Drag and drop from Available Functions to build your stack. If what you build is a valid MBTI stack it'll appear below.
-        </Typography>
-        <StackConstructor />
+      
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs value={currentView} onChange={handleViewChange} centered>
+          <Tab 
+            icon={<Build />} 
+            label="Stack Builder" 
+            value="builder"
+            iconPosition="start"
+          />
+          <Tab 
+            icon={<List />} 
+            label="Browse Types" 
+            value="types"
+            iconPosition="start"
+          />
+        </Tabs>
+      </Box>
+
+      <Box p={3}>
+        {currentView === 'builder' && (
+          <Box>
+            <Typography variant="h5" component="h1" gutterBottom>
+              Build Your Cognitive Stack
+            </Typography>
+            <Typography variant="body1" color="text.secondary" paragraph>
+              Drag and drop cognitive functions to build your stack. 
+              See real-time matches ordered by best fit.
+            </Typography>
+            <StackConstructor />
+          </Box>
+        )}
+        
+        {currentView === 'types' && <TypeList />}
       </Box>
     </ThemeProvider>
   );
