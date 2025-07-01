@@ -112,9 +112,10 @@ export const StackConstructor: React.FC = () => {
     const disabled = new Set<CognitiveFunction>();
     
     poolFunctions.forEach(poolFunc => {
-      // Check if this function can be placed in ANY slot
+      // Check if this function can be placed in ANY empty slot
       let canPlaceAnywhere = false;
       for (let i = 0; i < 4; i++) {
+        // Only check empty slots or slots that would be replaced
         if (canPlaceFunction(currentStackTypes, poolFunc.type, i)) {
           canPlaceAnywhere = true;
           break;
@@ -366,12 +367,14 @@ export const StackConstructor: React.FC = () => {
               sx={{ overflowX: "auto", pb: 1 }}
             >
               {shadowFunctions.map((func, index) => (
-                <FunctionSlot
+                <SortableFunctionSlot
                   key={`shadow-${index + 1}`}
                   id={`shadow-${index + 1}`}
                   label={SLOT_LABELS.shadow[index]}
                   function={func}
                   isShadow
+                  canAcceptDrop={true}
+                  isInvalidDrop={false}
                 />
               ))}
             </Box>
