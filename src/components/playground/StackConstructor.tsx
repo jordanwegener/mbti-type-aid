@@ -1,10 +1,26 @@
 import React, { useState, useMemo } from "react";
 import { Box, Stack, Typography, Button } from "@mui/material";
-import { DndContext, DragEndEvent } from "@dnd-kit/core";
+import { 
+  DndContext, 
+  DragEndEvent,
+  DragOverEvent,
+  DragStartEvent,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  horizontalListSortingStrategy,
+  arrayMove
+} from "@dnd-kit/sortable";
 import { CognitiveFunction } from "@domain/function/function";
 import { getStackType, MBTIType, getTypeInfo } from "@data/stack";
 import { FunctionPool } from "../functions/FunctionPool";
 import { FunctionSlot } from "../functions/FunctionSlot";
+import { SortableFunctionSlot } from "../functions/SortableFunctionSlot";
 import { TypeInfoModal } from '../modals/TypeInfoModal';
 import { MatchingResults } from "../matching/MatchingResults";
 import { findStackMatches } from "@utils/stackMatching";
@@ -51,6 +67,16 @@ export const StackConstructor: React.FC = () => {
     null
   ]);
 
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
   // Calculate shadow functions based on primary stack
   const shadowFunctions = stackSlots.map((slot) =>
     slot
@@ -73,8 +99,14 @@ export const StackConstructor: React.FC = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    setActiveId(null);
+    
     if (!over) return;
 
     const activeId = active.id as string;
@@ -95,11 +127,24 @@ export const StackConstructor: React.FC = () => {
       return;
     }
 
-    // Handle dropping to a slot
+    // Handle slot-to-slot reordering (sortable)
+    if (activeId.startsWith("slot-") && overId.startsWith("slot-")) {
+      const activeIndex = parseInt(activeId.split("-")[1], 10) - 1;
+      const overIndex = parseInt(overId.split("-")[1], 10) - 1;
+      
+      if (activeIndex !== overIndex) {
+        setStackSlots((slots) => {
+          return arrayMove(slots, activeIndex, overIndex);
+        });
+      }
+      return;
+    }
+
+    // Handle dropping from pool to slot
     if (overId.startsWith("slot-")) {
       const slotIndex = parseInt(overId.split("-")[1], 10) - 1;
 
-      // Find if function is coming from pool or another slot
+      // Find if function is coming from pool
       const poolIndex = poolFunctions.findIndex((f) => f.id === activeId);
       if (poolIndex !== -1) {
         // Coming from pool
@@ -114,16 +159,6 @@ export const StackConstructor: React.FC = () => {
           if (newSlots[slotIndex]) {
             setPoolFunctions((pool) => [...pool, newSlots[slotIndex]!]);
           }
-          newSlots[slotIndex] = functionToMove;
-          return newSlots;
-        });
-      } else {
-        // Moving between slots
-        setStackSlots((slots) => {
-          const newSlots = [...slots];
-          const oldSlotIndex = slots.findIndex((slot) => slot?.id === activeId);
-          const functionToMove = slots[oldSlotIndex];
-          newSlots[oldSlotIndex] = slots[slotIndex];
           newSlots[slotIndex] = functionToMove;
           return newSlots;
         });
@@ -149,9 +184,22 @@ export const StackConstructor: React.FC = () => {
     });
   };
 
+  // Create slot IDs for sortable context
+  const slotIds = stackSlots.map((_, index) => `slot-${index + 1}`);
+
   return (
-    <DndContext onDragEnd={handleDragEnd}>
+    <DndContext 
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
       <Stack spacing={4}>
+
+        <FunctionPool 
+          availableFunctions={poolFunctions} 
+          onReset={handleReset}
+        />
 
         <Stack spacing={3}>
           {/* Primary Functions Row */}
@@ -159,22 +207,24 @@ export const StackConstructor: React.FC = () => {
             <Typography variant="h6" align="center" gutterBottom>
               Primary Functions
             </Typography>
-            <Box
-              display="flex"
-              gap={2}
-              justifyContent="center"
-              sx={{ overflowX: "auto", pb: 1 }}
-            >
-              {stackSlots.map((func, index) => (
-                <FunctionSlot
-                  key={`slot-${index + 1}`}
-                  id={`slot-${index + 1}`}
-                  label={SLOT_LABELS.primary[index]}
-                  function={func}
-                  onRemove={handleRemoveFromSlot}
-                />
-              ))}
-            </Box>
+            <SortableContext items={slotIds} strategy={horizontalListSortingStrategy}>
+              <Box
+                display="flex"
+                gap={2}
+                justifyContent="center"
+                sx={{ overflowX: "auto", pb: 1 }}
+              >
+                {stackSlots.map((func, index) => (
+                  <SortableFunctionSlot
+                    key={`slot-${index + 1}`}
+                    id={`slot-${index + 1}`}
+                    label={SLOT_LABELS.primary[index]}
+                    function={func}
+                    onRemove={handleRemoveFromSlot}
+                  />
+                ))}
+              </Box>
+            </SortableContext>
           </Box>
 
           {/* Shadow Functions Row */}
@@ -205,11 +255,6 @@ export const StackConstructor: React.FC = () => {
             </Box>
           </Box>
         </Stack>
-
-        <FunctionPool 
-          availableFunctions={poolFunctions} 
-          onReset={handleReset}
-        />
 
         {stackType && (
           <Box textAlign="center" py={2} sx={{ backgroundColor: 'success.light', borderRadius: 2, mb: 2 }}>
