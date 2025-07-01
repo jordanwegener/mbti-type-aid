@@ -31,7 +31,8 @@ export const MatchingResults: React.FC<MatchingResultsProps> = ({
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
-  const displayedMatches = showAll ? matches : matches.slice(0, maxMatches);
+  const expandedMaxMatches = 8;
+  const displayedMatches = showAll ? matches.slice(0, expandedMaxMatches) : matches.slice(0, maxMatches);
   const hasMore = matches.length > maxMatches;
 
   if (matches.length === 0) {
@@ -172,7 +173,7 @@ export const MatchingResults: React.FC<MatchingResultsProps> = ({
                 }
               }}
             >
-              {showAll ? 'Show fewer matches' : `Show ${matches.length - maxMatches} more matches`}
+              {showAll ? 'Show fewer matches' : `Show ${Math.min(expandedMaxMatches, matches.length) - maxMatches} more matches`}
             </Button>
           </Box>
         )}
