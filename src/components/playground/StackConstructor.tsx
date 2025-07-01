@@ -133,10 +133,17 @@ export const StackConstructor: React.FC = () => {
     if (draggedFunction) {
       const currentStackTypes = stackSlots.map(slot => slot?.type || null);
       
+      // If dragging from a slot, temporarily remove it from the current stack
+      let testStack = [...currentStackTypes];
+      if (activeId.startsWith('slot-')) {
+        const draggedSlotIndex = parseInt(activeId.split('-')[1], 10) - 1;
+        testStack[draggedSlotIndex] = null;
+      }
+      
       // Check validation for each slot
       for (let i = 0; i < 4; i++) {
         const slotId = `slot-${i + 1}`;
-        validation[slotId] = canPlaceFunction(currentStackTypes, draggedFunction, i);
+        validation[slotId] = canPlaceFunction(testStack, draggedFunction, i);
       }
     }
     

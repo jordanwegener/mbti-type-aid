@@ -69,11 +69,57 @@ export function validateFunctionPlacement(
   newFunction: CognitiveFunction,
   position: number
 ): ValidationResult {
-  // Create a copy of the stack with the new function
-  const testStack = [...currentStack];
-  testStack[position] = newFunction;
+  // 1. Check for duplicates
+  if (currentStack.includes(newFunction)) {
+    return { 
+      isValid: false, 
+      reason: "Function already exists in stack" 
+    };
+  }
 
-  return validateStack(testStack);
+  // 2. Check type conflicts (only one N, S, T, F allowed)
+  const newFunctionType = getFunctionType(newFunction);
+  const existingTypes = currentStack
+    .filter((f): f is CognitiveFunction => f !== null)
+    .map(getFunctionType);
+    
+  if (existingTypes.includes(newFunctionType)) {
+    return { 
+      isValid: false, 
+      reason: `Cannot have multiple ${newFunctionType} functions` 
+    };
+  }
+
+  // 3. Check alternating intro/extro pattern
+  const isNewFunctionIntroverted = isIntroverted(newFunction);
+  
+  // Check previous position
+  if (position > 0 && currentStack[position - 1]) {
+    const prevFunction = currentStack[position - 1]!;
+    const isPrevIntroverted = isIntroverted(prevFunction);
+    
+    if (isNewFunctionIntroverted === isPrevIntroverted) {
+      return { 
+        isValid: false, 
+        reason: "Adjacent functions cannot have same orientation" 
+      };
+    }
+  }
+  
+  // Check next position  
+  if (position < 3 && currentStack[position + 1]) {
+    const nextFunction = currentStack[position + 1]!;
+    const isNextIntroverted = isIntroverted(nextFunction);
+    
+    if (isNewFunctionIntroverted === isNextIntroverted) {
+      return { 
+        isValid: false, 
+        reason: "Adjacent functions cannot have same orientation" 
+      };
+    }
+  }
+
+  return { isValid: true };
 }
 
 /**
@@ -210,5 +256,13 @@ export function canPlaceFunction(
   newFunction: CognitiveFunction,
   position: number
 ): boolean {
+  // Skip validation if slot is being cleared or if same function
+  if (!newFunction) return true;
+  if (currentStack[position]?.valueOf() === newFunction) return true;
+  
+  // Create test stack with new function
+  const testStack = [...currentStack];
+  testStack[position] = newFunction;
+  
   return validateFunctionPlacement(currentStack, newFunction, position).isValid;
 }

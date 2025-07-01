@@ -164,7 +164,8 @@ describe('stackValidation', () => {
       expect(validFunctions).toContain(CognitiveFunction.Ne)
       expect(validFunctions).toContain(CognitiveFunction.Se)
       expect(validFunctions).toContain(CognitiveFunction.Te)
-      expect(validFunctions).toContain(CognitiveFunction.Fe)
+      // Fe is NOT valid because Fi (F) is already in stack
+      expect(validFunctions).not.toContain(CognitiveFunction.Fe)
       
       expect(validFunctions).not.toContain(CognitiveFunction.Fi)
       expect(validFunctions).not.toContain(CognitiveFunction.Ti)
@@ -181,7 +182,8 @@ describe('stackValidation', () => {
       expect(validFunctions).toContain(CognitiveFunction.Fi)
       expect(validFunctions).toContain(CognitiveFunction.Ti)
       expect(validFunctions).toContain(CognitiveFunction.Si)
-      expect(validFunctions).toContain(CognitiveFunction.Ni)
+      // Ni is NOT valid because Ne (N) is already in stack
+      expect(validFunctions).not.toContain(CognitiveFunction.Ni)
       
       expect(validFunctions).not.toContain(CognitiveFunction.Ne)
       expect(validFunctions).not.toContain(CognitiveFunction.Se)
