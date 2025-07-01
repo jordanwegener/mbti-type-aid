@@ -95,8 +95,21 @@ export const MatchingResults: React.FC<MatchingResultsProps> = ({
           const matchColor = getMatchColor(match.score);
           
           return (
-            <Card key={match.type} variant="outlined">
-              <CardContent>
+            <Card 
+              key={match.type} 
+              variant="outlined"
+              sx={{ 
+                height: '200px',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              <CardContent sx={{ 
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden'
+              }}>
                 <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
                   <Box>
                     <Box display="flex" alignItems="center" gap={1} mb={0.5}>
@@ -135,24 +148,30 @@ export const MatchingResults: React.FC<MatchingResultsProps> = ({
                   />
                 </Box>
 
-                {match.matchedPositions.length > 0 && (
-                  <Box>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                      Exact position matches: {match.matchedPositions.length} out of 4
-                    </Typography>
-                    <Stack direction="row" spacing={0.5} flexWrap="wrap">
-                      {match.matchedPositions.map((position) => (
-                        <Chip
-                          key={position}
-                          label={`Position ${position + 1}`}
-                          size="small"
-                          color="success"
-                          variant="outlined"
-                        />
-                      ))}
-                    </Stack>
-                  </Box>
-                )}
+                <Box sx={{ flex: 1, minHeight: '60px' }}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Exact position matches: {match.matchedPositions.length} out of 4
+                  </Typography>
+                  <Stack 
+                    direction="row" 
+                    spacing={0.5} 
+                    flexWrap="wrap"
+                    sx={{ 
+                      minHeight: '32px',
+                      alignItems: 'flex-start'
+                    }}
+                  >
+                    {match.matchedPositions.map((position) => (
+                      <Chip
+                        key={position}
+                        label={`Position ${position + 1}`}
+                        size="small"
+                        color="success"
+                        variant="outlined"
+                      />
+                    ))}
+                  </Stack>
+                </Box>
               </CardContent>
             </Card>
           );
