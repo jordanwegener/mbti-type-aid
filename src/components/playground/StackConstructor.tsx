@@ -397,14 +397,12 @@ export const StackConstructor: React.FC = () => {
               }}
             >
               {shadowFunctions.map((func, index) => (
-                <SortableFunctionSlot
+                <FunctionSlot
                   key={`shadow-${index + 1}`}
                   id={`shadow-${index + 1}`}
                   label={SLOT_LABELS.shadow[index]}
                   function={func}
                   isShadow
-                  canAcceptDrop={true}
-                  isInvalidDrop={false}
                 />
               ))}
             </Box>
