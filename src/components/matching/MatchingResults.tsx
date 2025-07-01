@@ -25,7 +25,7 @@ interface MatchingResultsProps {
 
 export const MatchingResults: React.FC<MatchingResultsProps> = ({ 
   matches, 
-  maxMatches = 5 
+  maxMatches = 3 
 }) => {
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -78,11 +78,17 @@ export const MatchingResults: React.FC<MatchingResultsProps> = ({
       
       <Typography variant="body2" color="text.secondary" paragraph>
         Types are ordered by how well they match your current stack. 
-        Higher scores indicate better matches.
+        {matches.length > maxMatches && !showAll && ' Click to see more matches.'}
       </Typography>
 
-      <Stack spacing={2}>
-        {displayedMatches.map((match, index) => {
+      <Box 
+        sx={{ 
+          minHeight: matches.length > 0 ? '350px' : 'auto',
+          transition: 'min-height 0.3s ease'
+        }}
+      >
+        <Stack spacing={2}>
+          {displayedMatches.map((match, index) => {
           const typeInfo = MBTITypeDescriptions[match.type];
           const percentage = getScorePercentage(match.score);
           const matchColor = getMatchColor(match.score);
@@ -152,17 +158,26 @@ export const MatchingResults: React.FC<MatchingResultsProps> = ({
         })}
 
         {hasMore && (
-          <Box textAlign="center">
+          <Box textAlign="center" mt={1}>
             <Button
-              variant="outlined"
+              variant="text"
+              size="small"
               onClick={() => setShowAll(!showAll)}
               startIcon={showAll ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              sx={{ 
+                textTransform: 'none',
+                color: 'text.secondary',
+                '&:hover': {
+                  color: 'primary.main'
+                }
+              }}
             >
-              {showAll ? 'Show Less' : `Show All ${matches.length} Matches`}
+              {showAll ? 'Show fewer matches' : `Show ${matches.length - maxMatches} more matches`}
             </Button>
           </Box>
         )}
-      </Stack>
+        </Stack>
+      </Box>
 
       {selectedType && (
         <TypeInfoModal
