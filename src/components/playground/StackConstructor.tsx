@@ -27,6 +27,7 @@ import { MatchingResults } from "../matching/MatchingResults";
 import { findStackMatches } from "@utils/stackMatching";
 import { canPlaceFunction, getValidFunctionsForPosition, validateStack } from "@utils/stackValidation";
 import { designTokens } from "../../theme";
+import { useIsTouchDevice } from "../../hooks/useInputType";
 
 interface CognitiveItem {
   id: string;
@@ -67,6 +68,7 @@ const createFunctionItem = (type: CognitiveFunction, context: 'pool' | 'slot' = 
 });
 
 export const StackConstructor: React.FC = () => {
+  const isTouchDevice = useIsTouchDevice();
   const [poolFunctions, setPoolFunctions] =
     useState<CognitiveItem[]>(initialFunctions);
   const [stackSlots, setStackSlots] = useState<(CognitiveItem | null)[]>([
@@ -82,7 +84,7 @@ export const StackConstructor: React.FC = () => {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: isTouchDevice ? 15 : 8, // Longer distance for touch to prevent accidental drags
       },
     })
   );
@@ -132,9 +134,25 @@ export const StackConstructor: React.FC = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Cleanup scroll prevention on unmount
+  useEffect(() => {
+    return () => {
+      if (isTouchDevice) {
+        document.body.style.touchAction = '';
+        document.body.style.overflow = '';
+      }
+    };
+  }, [isTouchDevice]);
+
   const handleDragStart = (event: DragStartEvent) => {
     const activeId = event.active.id as string;
     setActiveId(activeId);
+    
+    // Prevent scrolling during drag on touch devices
+    if (isTouchDevice) {
+      document.body.style.touchAction = 'none';
+      document.body.style.overflow = 'hidden';
+    }
     
     // Pre-calculate validation for all slots when drag starts
     const validation: Record<string, boolean> = {};
@@ -188,6 +206,12 @@ export const StackConstructor: React.FC = () => {
     const { active, over } = event;
     setActiveId(null);
     setDragValidation({});
+    
+    // Restore scrolling on touch devices
+    if (isTouchDevice) {
+      document.body.style.touchAction = '';
+      document.body.style.overflow = '';
+    }
     
     if (!over) return;
 
