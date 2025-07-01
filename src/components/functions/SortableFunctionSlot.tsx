@@ -19,6 +19,8 @@ interface SortableFunctionSlotProps {
   isShadow?: boolean;
   onRemove?: (functionId: string) => void;
   isOverlay?: boolean;
+  canAcceptDrop?: boolean;
+  isInvalidDrop?: boolean;
 }
 
 export const SortableFunctionSlot: React.FC<SortableFunctionSlotProps> = ({ 
@@ -27,7 +29,9 @@ export const SortableFunctionSlot: React.FC<SortableFunctionSlotProps> = ({
   function: func, 
   isShadow = false,
   onRemove,
-  isOverlay = false
+  isOverlay = false,
+  canAcceptDrop = true,
+  isInvalidDrop = false
 }) => {
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   
@@ -124,7 +128,9 @@ export const SortableFunctionSlot: React.FC<SortableFunctionSlotProps> = ({
           justifyContent: "center",
           backgroundColor: isShadow ? "action.disabledBackground" : "background.paper",
           border: "2px dashed",
-          borderColor: func ? "primary.main" : "divider",
+          borderColor: isInvalidDrop ? "error.main" : 
+                      canAcceptDrop && isOver && !isShadow ? "success.main" :
+                      func ? "primary.main" : "divider",
           opacity: isShadow ? 0.7 : 1,
           position: "relative",
           cursor: func && !isShadow && !isOverlay ? 'grab' : 'default',

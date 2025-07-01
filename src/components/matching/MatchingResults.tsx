@@ -120,6 +120,7 @@ export const MatchingResults: React.FC<MatchingResultsProps> = ({
                         size="small"
                         onClick={() => handleInfoClick(match.type)}
                         sx={{ padding: 0.5 }}
+                        aria-label={`Info about ${match.type}`}
                       >
                         <InfoOutlinedIcon fontSize="small" />
                       </IconButton>
@@ -149,28 +150,34 @@ export const MatchingResults: React.FC<MatchingResultsProps> = ({
                 </Box>
 
                 <Box sx={{ flex: 1, minHeight: '60px' }}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Exact position matches: {match.matchedPositions.length} out of 4
-                  </Typography>
-                  <Stack 
-                    direction="row" 
-                    spacing={0.5} 
-                    flexWrap="wrap"
-                    sx={{ 
-                      minHeight: '32px',
-                      alignItems: 'flex-start'
-                    }}
-                  >
-                    {match.matchedPositions.map((position) => (
-                      <Chip
-                        key={position}
-                        label={`Position ${position + 1}`}
-                        size="small"
-                        color="success"
-                        variant="outlined"
-                      />
-                    ))}
-                  </Stack>
+                  {match.matchedPositions.length > 0 ? (
+                    <>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Exact position matches: {match.matchedPositions.length} out of 4
+                      </Typography>
+                      <Stack 
+                        direction="row" 
+                        spacing={0.5} 
+                        flexWrap="wrap"
+                        sx={{ 
+                          minHeight: '32px',
+                          alignItems: 'flex-start'
+                        }}
+                      >
+                        {match.matchedPositions.map((position) => (
+                          <Chip
+                            key={position}
+                            label={`Position ${position + 1}`}
+                            size="small"
+                            color="success"
+                            variant="outlined"
+                          />
+                        ))}
+                      </Stack>
+                    </>
+                  ) : (
+                    <Box sx={{ minHeight: '60px' }} />
+                  )}
                 </Box>
               </CardContent>
             </Card>

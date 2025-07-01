@@ -25,6 +25,7 @@ import { SortableFunctionSlot } from "../functions/SortableFunctionSlot";
 import { TypeInfoModal } from '../modals/TypeInfoModal';
 import { MatchingResults } from "../matching/MatchingResults";
 import { findStackMatches } from "@utils/stackMatching";
+import { canPlaceFunction, getValidFunctionsForPosition, validateStack } from "@utils/stackValidation";
 
 interface CognitiveItem {
   id: string;
@@ -75,6 +76,7 @@ export const StackConstructor: React.FC = () => {
   ]);
 
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [dragValidation, setDragValidation] = useState<Record<string, boolean>>({});
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -107,12 +109,44 @@ export const StackConstructor: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
+    const activeId = event.active.id as string;
+    setActiveId(activeId);
+    
+    // Pre-calculate validation for all slots when drag starts
+    const validation: Record<string, boolean> = {};
+    
+    // Find the function being dragged
+    let draggedFunction: CognitiveFunction | null = null;
+    
+    // Check if it's from pool
+    const poolFunction = poolFunctions.find(f => f.id === activeId);
+    if (poolFunction) {
+      draggedFunction = poolFunction.type;
+    } else if (activeId.startsWith('slot-')) {
+      // Check if it's from a slot
+      const slotIndex = parseInt(activeId.split('-')[1], 10) - 1;
+      if (stackSlots[slotIndex]) {
+        draggedFunction = stackSlots[slotIndex]!.type;
+      }
+    }
+    
+    if (draggedFunction) {
+      const currentStackTypes = stackSlots.map(slot => slot?.type || null);
+      
+      // Check validation for each slot
+      for (let i = 0; i < 4; i++) {
+        const slotId = `slot-${i + 1}`;
+        validation[slotId] = canPlaceFunction(currentStackTypes, draggedFunction, i);
+      }
+    }
+    
+    setDragValidation(validation);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
+    setDragValidation({});
     
     if (!over) return;
 
@@ -141,10 +175,17 @@ export const StackConstructor: React.FC = () => {
       const activeIndex = parseInt(activeId.split("-")[1], 10) - 1;
       const overIndex = parseInt(overId.split("-")[1], 10) - 1;
       
-      if (activeIndex !== overIndex) {
-        setStackSlots((slots) => {
-          return arrayMove(slots, activeIndex, overIndex);
-        });
+      if (activeIndex !== overIndex && stackSlots[activeIndex]) {
+        // Test the move for validity
+        const testSlots = arrayMove([...stackSlots], activeIndex, overIndex);
+        const testStackTypes = testSlots.map(slot => slot?.type || null);
+        
+        // Validate the resulting stack
+        const validation = validateStack(testStackTypes);
+        if (validation.isValid) {
+          setStackSlots(testSlots);
+        }
+        // If invalid, do nothing (could add visual feedback)
       }
       return;
     }
@@ -156,8 +197,18 @@ export const StackConstructor: React.FC = () => {
       // Find if function is coming from pool
       const poolIndex = poolFunctions.findIndex((f) => f.id === activeId);
       if (poolIndex !== -1) {
-        // Coming from pool - handle both state updates together
         const functionToMove = poolFunctions[poolIndex];
+        
+        // Validate placement using current stack state
+        const currentStackTypes = stackSlots.map(slot => slot?.type || null);
+        const isValidPlacement = canPlaceFunction(currentStackTypes, functionToMove.type, slotIndex);
+        
+        if (!isValidPlacement) {
+          // Invalid placement - do nothing (could add visual feedback here)
+          return;
+        }
+        
+        // Coming from pool - handle both state updates together
         const currentSlotFunction = stackSlots[slotIndex];
         
         // Update pool functions
@@ -246,15 +297,23 @@ export const StackConstructor: React.FC = () => {
                 justifyContent="center"
                 sx={{ overflowX: "auto", pb: 1 }}
               >
-                {stackSlots.map((func, index) => (
-                  <SortableFunctionSlot
-                    key={`slot-${index + 1}`}
-                    id={`slot-${index + 1}`}
-                    label={SLOT_LABELS.primary[index]}
-                    function={func}
-                    onRemove={handleRemoveFromSlot}
-                  />
-                ))}
+                {stackSlots.map((func, index) => {
+                  const slotId = `slot-${index + 1}`;
+                  const canAccept = dragValidation[slotId] !== false;
+                  const isInvalid = activeId && dragValidation[slotId] === false;
+                  
+                  return (
+                    <SortableFunctionSlot
+                      key={slotId}
+                      id={slotId}
+                      label={SLOT_LABELS.primary[index]}
+                      function={func}
+                      onRemove={handleRemoveFromSlot}
+                      canAcceptDrop={canAccept}
+                      isInvalidDrop={!!isInvalid}
+                    />
+                  );
+                })}
               </Box>
             </SortableContext>
           </Box>

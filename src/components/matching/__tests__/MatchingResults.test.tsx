@@ -161,7 +161,7 @@ describe('MatchingResults', () => {
     expect(screen.getByText('#2 ISFP')).toBeInTheDocument()
     expect(screen.queryByText('#3 ENFP')).not.toBeInTheDocument()
     
-    // Expand button should show 3 more (limited to 8 total, so 6 more after 2)
-    expect(screen.getByText('Show 6 more matches')).toBeInTheDocument()
+    // Expand button should show 3 more (limited to 8 total, but only 5 matches exist, so 5-2=3 more after 2)
+    expect(screen.getByText('Show 3 more matches')).toBeInTheDocument()
   })
 })
