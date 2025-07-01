@@ -7,6 +7,7 @@ import { CognitiveFunction } from "@domain/function/function";
 import { FunctionBlock } from "./FunctionBlock";
 import { PrimaryPositionInfo, ShadowPositionInfo } from "../../data/positionInfo";
 import { PositionInfoModal } from "../modals/PositionInfoModal";
+import { designTokens } from "../../theme";
 
 interface FunctionSlotProps {
   id: string;
@@ -37,7 +38,11 @@ export const FunctionSlot: React.FC<FunctionSlotProps> = ({
     : PrimaryPositionInfo[label];
 
   return (
-    <Box sx={{ minWidth: 150, textAlign: "center" }}>
+    <Box sx={{ 
+      width: designTokens.slots.width, 
+      textAlign: "center",
+      flexShrink: 0
+    }}>
       <Box 
         sx={{ 
           display: 'flex', 
@@ -83,18 +88,33 @@ export const FunctionSlot: React.FC<FunctionSlotProps> = ({
       
       <Paper
         ref={setNodeRef}
+        elevation={func ? 3 : 1}
         sx={{
-          p: 2,
-          minHeight: 100,
+          p: designTokens.spacing.lg / 8,
+          height: designTokens.slots.height,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
           backgroundColor: isShadow ? "action.disabledBackground" : "background.paper",
-          border: "2px dashed",
+          border: func ? "2px solid" : "2px dashed",
           borderColor: func ? "primary.main" : "divider",
+          borderRadius: designTokens.borderRadius.lg / 8,
           opacity: isShadow ? 0.7 : 1,
-          position: "relative"
+          position: "relative",
+          background: func && !isShadow ? (theme) => 
+            theme.palette.mode === 'dark' 
+              ? `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.primary.dark}15 100%)`
+              : `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.primary.light}10 100%)`
+            : undefined,
+          transition: designTokens.transitions.normal,
+          '&:hover': func ? {} : {
+            borderColor: 'primary.light',
+            backgroundColor: (theme) => 
+              theme.palette.mode === 'dark' 
+                ? 'rgba(99, 102, 241, 0.05)'
+                : 'rgba(79, 70, 229, 0.03)',
+          }
         }}
       >
         {func ? (
@@ -102,7 +122,7 @@ export const FunctionSlot: React.FC<FunctionSlotProps> = ({
             <FunctionBlock
               id={func.id}
               cognitiveFunction={func.type}
-              disabled={isShadow}
+              disabled={false}
             />
             {!isShadow && onRemove && (
               <IconButton
