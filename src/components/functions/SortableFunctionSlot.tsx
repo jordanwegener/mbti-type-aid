@@ -41,17 +41,17 @@ export const SortableFunctionSlot: React.FC<SortableFunctionSlotProps> = ({
     isOver
   } = useSortable({
     id,
-    disabled: isShadow || !func, // Only allow dragging if there's a function and it's not shadow
+    disabled: isShadow || !func || isOverlay, // Only allow dragging if there's a function and it's not shadow or overlay
     data: {
       type: 'slot',
       function: func
     }
   });
 
-  const style = {
+  const style = isOverlay ? {} : {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.3 : 1,
   };
 
   const positionInfo = isShadow 
@@ -127,17 +127,22 @@ export const SortableFunctionSlot: React.FC<SortableFunctionSlotProps> = ({
           borderColor: func ? "primary.main" : "divider",
           opacity: isShadow ? 0.7 : 1,
           position: "relative",
-          cursor: func && !isShadow ? 'grab' : 'default',
+          cursor: func && !isShadow && !isOverlay ? 'grab' : 'default',
           '&:hover': {
-            borderColor: func && !isShadow ? 'primary.dark' : undefined,
+            borderColor: func && !isShadow && !isOverlay ? 'primary.dark' : undefined,
           },
           ...(isDragging && {
             cursor: 'grabbing',
             boxShadow: 4,
+          }),
+          ...(isOverlay && {
+            boxShadow: 6,
+            borderColor: 'primary.main',
+            backgroundColor: 'background.paper',
           })
         }}
-        {...attributes}
-        {...listeners}
+        {...(!isOverlay ? attributes : {})}
+        {...(!isOverlay ? listeners : {})}
       >
         {func ? (
           <>

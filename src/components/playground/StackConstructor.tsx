@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from "react";
-import { Box, Stack, Typography, Button } from "@mui/material";
+import { Box, Stack, Typography, Button, Paper } from "@mui/material";
 import { 
   DndContext, 
   DragEndEvent,
   DragOverEvent,
   DragStartEvent,
+  DragOverlay,
   closestCenter,
   PointerSensor,
   useSensor,
@@ -187,6 +188,23 @@ export const StackConstructor: React.FC = () => {
   // Create slot IDs for sortable context
   const slotIds = stackSlots.map((_, index) => `slot-${index + 1}`);
 
+  // Get the active item for drag overlay
+  const activeItem = useMemo(() => {
+    if (!activeId) return null;
+    
+    // Check if it's from pool
+    const poolItem = poolFunctions.find(f => f.id === activeId);
+    if (poolItem) return poolItem;
+    
+    // Check if it's from slots
+    if (activeId.startsWith('slot-')) {
+      const slotIndex = parseInt(activeId.split('-')[1], 10) - 1;
+      return stackSlots[slotIndex];
+    }
+    
+    return null;
+  }, [activeId, poolFunctions, stackSlots]);
+
   return (
     <DndContext 
       sensors={sensors}
@@ -280,6 +298,30 @@ export const StackConstructor: React.FC = () => {
           typeInfo={stackType ? getTypeInfo(stackType) : undefined}
         />
       </Stack>
+
+      <DragOverlay>
+        {activeItem ? (
+          <Paper
+            elevation={8}
+            sx={{
+              p: 2,
+              backgroundColor: "background.paper",
+              minWidth: 80,
+              textAlign: "center",
+              cursor: 'grabbing',
+              pointerEvents: 'none',
+              transform: 'rotate(5deg)',
+              opacity: 0.95,
+              border: "2px solid",
+              borderColor: "primary.main"
+            }}
+          >
+            <Typography variant="h6" color="primary">
+              {activeItem.type}
+            </Typography>
+          </Paper>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 };
