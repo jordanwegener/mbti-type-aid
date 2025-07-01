@@ -17,6 +17,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { StackMatch } from "@utils/stackMatching";
 import { MBTITypeDescriptions } from "@data/stack";
 import { TypeInfoModal } from "../modals/TypeInfoModal";
+import { designTokens } from "../../theme";
 
 interface MatchingResultsProps {
   matches: StackMatch[];
@@ -101,14 +102,46 @@ export const MatchingResults: React.FC<MatchingResultsProps> = ({
               sx={{ 
                 height: '200px',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                borderRadius: designTokens.borderRadius.xl / 8,
+                border: '1px solid',
+                borderColor: 'divider',
+                background: (theme) => 
+                  theme.palette.mode === 'dark' 
+                    ? `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.grey[900]} 100%)`
+                    : `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.grey[50]} 100%)`,
+                position: 'relative',
+                overflow: 'hidden',
+                transition: designTokens.transitions.slow,
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '4px',
+                  background: (theme) => {
+                    const color = getMatchColor(match.score);
+                    return `linear-gradient(90deg, ${theme.palette[color].main}, ${theme.palette[color].light})`;
+                  },
+                  opacity: 0.8
+                },
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: (theme) => 
+                    theme.palette.mode === 'dark' 
+                      ? designTokens.shadows.dark[5]
+                      : designTokens.shadows.light[5],
+                  borderColor: 'primary.light',
+                }
               }}
             >
               <CardContent sx={{ 
                 flex: 1,
                 display: 'flex',
                 flexDirection: 'column',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                p: designTokens.spacing.lg / 8
               }}>
                 <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
                   <Box>
@@ -145,7 +178,21 @@ export const MatchingResults: React.FC<MatchingResultsProps> = ({
                     variant="determinate"
                     value={percentage}
                     color={matchColor}
-                    sx={{ height: 8, borderRadius: 4 }}
+                    sx={{ 
+                      height: 10, 
+                      borderRadius: designTokens.borderRadius.sm / 8,
+                      backgroundColor: (theme) => 
+                        theme.palette.mode === 'dark' 
+                          ? 'rgba(255, 255, 255, 0.1)'
+                          : 'rgba(0, 0, 0, 0.08)',
+                      '& .MuiLinearProgress-bar': {
+                        borderRadius: designTokens.borderRadius.sm / 8,
+                        background: (theme) => {
+                          const color = matchColor;
+                          return `linear-gradient(90deg, ${theme.palette[color].main}, ${theme.palette[color].light})`;
+                        }
+                      }
+                    }}
                   />
                 </Box>
 

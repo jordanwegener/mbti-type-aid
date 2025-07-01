@@ -72,7 +72,7 @@ export const SortableFunctionSlot: React.FC<SortableFunctionSlotProps> = ({
         textAlign: "center",
         flexShrink: 0,
         ...(isOver && !isShadow && {
-          transform: 'scale(1.05)',
+          transform: `scale(${designTokens.slots.hoverScale})`,
           transition: 'transform 0.2s ease',
         })
       }}
@@ -191,7 +191,7 @@ export const SortableFunctionSlot: React.FC<SortableFunctionSlotProps> = ({
             transform: 'rotate(-2deg)',
           }),
           ...(canAcceptDrop && isOver && !isShadow && {
-            transform: 'scale(1.05)',
+            transform: `scale(${designTokens.slots.hoverScale})`,
             borderColor: 'success.main',
             backgroundColor: (theme) => 
               theme.palette.mode === 'dark' 
