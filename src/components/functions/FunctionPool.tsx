@@ -4,6 +4,8 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import { useDroppable } from "@dnd-kit/core";
 import { CognitiveFunction } from "@domain/function/function";
 import { FunctionBlock } from "./FunctionBlock";
+import { getDisabledReason } from "@utils/disabledReasons";
+import { designTokens } from "../../theme";
 
 interface FunctionPoolProps {
   availableFunctions: Array<{
@@ -11,11 +13,15 @@ interface FunctionPoolProps {
     type: CognitiveFunction;
   }>;
   onReset: () => void;
+  disabledFunctions?: Set<CognitiveFunction>;
+  currentStack?: (CognitiveFunction | null)[];
 }
 
 export const FunctionPool: React.FC<FunctionPoolProps> = ({ 
   availableFunctions,
-  onReset
+  onReset,
+  disabledFunctions = new Set(),
+  currentStack = [null, null, null, null]
 }) => {
   const { setNodeRef } = useDroppable({
     id: "function-pool"
@@ -44,17 +50,38 @@ export const FunctionPool: React.FC<FunctionPoolProps> = ({
       </Box>
       <Paper 
         ref={setNodeRef}
+        elevation={2}
         sx={{
-          p: 2,
+          p: designTokens.spacing.lg / 8,
           backgroundColor: "background.default",
           border: "2px dashed",
           borderColor: "divider",
-          minHeight: 100,
+          borderRadius: designTokens.borderRadius.lg / 8,
+          // Responsive width: single row on desktop, 2 rows on mobile
+          width: {
+            xs: `${designTokens.functionPool.mobileContainerWidth}px`, // 2x4 mobile
+            md: `${designTokens.functionPool.containerWidth}px` // 1x8 desktop
+          },
+          maxWidth: '100%',
+          minHeight: designTokens.functionPool.minRowHeight,
+          mx: 'auto',
           display: "flex",
           flexWrap: "wrap",
-          gap: 2,
+          gap: designTokens.functionPool.spacing / 8,
           alignItems: "center",
-          justifyContent: "center"
+          justifyContent: "center",
+          background: (theme) => 
+            theme.palette.mode === 'dark' 
+              ? `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.background.paper}40 100%)`
+              : `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.grey[100]} 100%)`,
+          transition: designTokens.transitions.normal,
+          '&:hover': {
+            borderColor: 'secondary.light',
+            backgroundColor: (theme) =>
+              theme.palette.mode === 'dark'
+                ? 'rgba(6, 182, 212, 0.03)'
+                : 'rgba(8, 145, 178, 0.02)',
+          }
         }}
       >
         {availableFunctions.length === 0 ? (
@@ -62,13 +89,20 @@ export const FunctionPool: React.FC<FunctionPoolProps> = ({
             Drop functions here to return them to the pool
           </Typography>
         ) : (
-          availableFunctions.map((func) => (
-            <FunctionBlock
-              key={func.id}
-              id={func.id}
-              cognitiveFunction={func.type}
-            />
-          ))
+          availableFunctions.map((func) => {
+            const isDisabled = disabledFunctions.has(func.type);
+            const disabledReason = isDisabled ? getDisabledReason(currentStack, func.type) : undefined;
+            
+            return (
+              <FunctionBlock
+                key={func.id}
+                id={func.id}
+                cognitiveFunction={func.type}
+                disabled={isDisabled}
+                disabledReason={disabledReason}
+              />
+            );
+          })
         )}
       </Paper>
     </Box>

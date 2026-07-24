@@ -1,0 +1,265 @@
+import React, { useState } from "react";
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Chip,
+  Stack,
+  IconButton,
+  LinearProgress,
+  Collapse,
+  Button
+} from "@mui/material";
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import { StackMatch } from "@utils/stackMatching";
+import { MBTITypeDescriptions } from "@data/stack";
+import { TypeInfoModal } from "../modals/TypeInfoModal";
+import { designTokens } from "../../theme";
+
+interface MatchingResultsProps {
+  matches: StackMatch[];
+  maxMatches?: number;
+}
+
+export const MatchingResults: React.FC<MatchingResultsProps> = ({ 
+  matches, 
+  maxMatches = 3 
+}) => {
+  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+
+  const expandedMaxMatches = 8;
+  const displayedMatches = showAll ? matches.slice(0, expandedMaxMatches) : matches.slice(0, maxMatches);
+  const hasMore = matches.length > maxMatches;
+
+  if (matches.length === 0) {
+    return (
+      <Box textAlign="center" py={4}>
+        <Typography variant="h6" color="text.secondary">
+          No matches found
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Add functions to your stack to see potential MBTI types
+        </Typography>
+      </Box>
+    );
+  }
+
+  const handleInfoClick = (type: string) => {
+    setSelectedType(type);
+    setIsInfoModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsInfoModalOpen(false);
+    setSelectedType(null);
+  };
+
+  const getScorePercentage = (score: number) => {
+    const maxPossibleScore = 10 * 4 + 10 * 3 + 10 * 2 + 10 * 1; // 100 points max
+    return Math.min((score / maxPossibleScore) * 100, 100);
+  };
+
+  const getMatchColor = (score: number) => {
+    const percentage = getScorePercentage(score);
+    if (percentage >= 80) return "success";
+    if (percentage >= 60) return "warning";
+    if (percentage >= 40) return "info";
+    return "error";
+  };
+
+  return (
+    <Box>
+      <Typography variant="h5" gutterBottom>
+        Potential Matches ({matches.length})
+      </Typography>
+      
+      <Typography variant="body2" color="text.secondary" paragraph>
+        Types are ordered by how well they match your current stack. 
+        {matches.length > maxMatches && !showAll && ' Click to see more matches.'}
+      </Typography>
+
+      <Box 
+        sx={{ 
+          minHeight: matches.length > 0 ? '350px' : 'auto',
+          transition: 'min-height 0.3s ease'
+        }}
+      >
+        <Stack spacing={2}>
+          {displayedMatches.map((match, index) => {
+          const typeInfo = MBTITypeDescriptions[match.type];
+          const percentage = getScorePercentage(match.score);
+          const matchColor = getMatchColor(match.score);
+          
+          return (
+            <Card 
+              key={match.type} 
+              variant="outlined"
+              sx={{ 
+                height: '200px',
+                display: 'flex',
+                flexDirection: 'column',
+                borderRadius: designTokens.borderRadius.xl / 8,
+                border: '1px solid',
+                borderColor: 'divider',
+                background: (theme) => 
+                  theme.palette.mode === 'dark' 
+                    ? `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.grey[900]} 100%)`
+                    : `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.grey[50]} 100%)`,
+                position: 'relative',
+                overflow: 'hidden',
+                transition: designTokens.transitions.slow,
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '4px',
+                  background: (theme) => {
+                    const color = getMatchColor(match.score);
+                    return `linear-gradient(90deg, ${theme.palette[color].main}, ${theme.palette[color].light})`;
+                  },
+                  opacity: 0.8
+                },
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: (theme) => 
+                    theme.palette.mode === 'dark' 
+                      ? designTokens.shadows.dark[5]
+                      : designTokens.shadows.light[5],
+                  borderColor: 'primary.light',
+                }
+              }}
+            >
+              <CardContent sx={{ 
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                p: designTokens.spacing.lg / 8
+              }}>
+                <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+                  <Box>
+                    <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+                      <Typography variant="h6" color="primary">
+                        #{index + 1} {match.type}
+                      </Typography>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleInfoClick(match.type)}
+                        sx={{ padding: 0.5 }}
+                        aria-label={`Info about ${match.type}`}
+                      >
+                        <InfoOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      {typeInfo.nickname}
+                    </Typography>
+                  </Box>
+                  
+                  <Box textAlign="right">
+                    <Typography variant="body2" color="text.secondary">
+                      Match Score
+                    </Typography>
+                    <Typography variant="h6" color={`${matchColor}.main`}>
+                      {percentage.toFixed(0)}%
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box mb={2}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={percentage}
+                    color={matchColor}
+                    sx={{ 
+                      height: 10, 
+                      borderRadius: designTokens.borderRadius.sm / 8,
+                      backgroundColor: (theme) => 
+                        theme.palette.mode === 'dark' 
+                          ? 'rgba(255, 255, 255, 0.1)'
+                          : 'rgba(0, 0, 0, 0.08)',
+                      '& .MuiLinearProgress-bar': {
+                        borderRadius: designTokens.borderRadius.sm / 8,
+                        background: (theme) => {
+                          const color = matchColor;
+                          return `linear-gradient(90deg, ${theme.palette[color].main}, ${theme.palette[color].light})`;
+                        }
+                      }
+                    }}
+                  />
+                </Box>
+
+                <Box sx={{ flex: 1, minHeight: '60px' }}>
+                  {match.matchedPositions.length > 0 ? (
+                    <>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Exact position matches: {match.matchedPositions.length} out of 4
+                      </Typography>
+                      <Stack 
+                        direction="row" 
+                        spacing={0.5} 
+                        flexWrap="wrap"
+                        sx={{ 
+                          minHeight: '32px',
+                          alignItems: 'flex-start'
+                        }}
+                      >
+                        {match.matchedPositions.map((position) => (
+                          <Chip
+                            key={position}
+                            label={`Position ${position + 1}`}
+                            size="small"
+                            color="success"
+                            variant="outlined"
+                          />
+                        ))}
+                      </Stack>
+                    </>
+                  ) : (
+                    <Box sx={{ minHeight: '60px' }} />
+                  )}
+                </Box>
+              </CardContent>
+            </Card>
+          );
+        })}
+
+        {hasMore && (
+          <Box textAlign="center" mt={1}>
+            <Button
+              variant="text"
+              size="small"
+              onClick={() => setShowAll(!showAll)}
+              startIcon={showAll ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              sx={{ 
+                textTransform: 'none',
+                color: 'text.secondary',
+                '&:hover': {
+                  color: 'primary.main'
+                }
+              }}
+            >
+              {showAll ? 'Show fewer matches' : `Show ${Math.min(expandedMaxMatches, matches.length) - maxMatches} more matches`}
+            </Button>
+          </Box>
+        )}
+        </Stack>
+      </Box>
+
+      {selectedType && (
+        <TypeInfoModal
+          open={isInfoModalOpen}
+          onClose={handleCloseModal}
+          type={selectedType as any}
+        />
+      )}
+    </Box>
+  );
+};
