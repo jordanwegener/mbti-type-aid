@@ -1,45 +1,62 @@
 # MBTI Type Aid
 
-This is a simple app designed to help users identify someone's MBTI type using cognitive functions. The app provides a list of MBTI types along with their cognitive function stacks and allows users to drag and drop cognitive functions to create a custom stack. As you build your stack, the app will filter and display the closest matching MBTI types in real-time, ordered by the closest match to the stack you have created.
+A browser-based aid for exploring Myers-Briggs cognitive-function stacks. Build
+a partial stack by dragging functions into the dominant, auxiliary, tertiary,
+and inferior positions; the app validates placements and ranks the closest MBTI
+types in real time. A separate view lists all 16 types and their canonical
+stacks.
 
 ## Features
 
-- **MBTI Type List**: View a list of all MBTI types along with their cognitive function stacks.
-- **Drag and Drop Interface**: Drag cognitive functions from a provided list and drop them to build your own stack.
-- **Real-Time Filtering**: As you build your stack, the app filters and displays potential MBTI types, ordered by the closest match.
+- Drag-and-drop cognitive stack builder with mouse and touch support
+- Placement validation based on function attitude, category, and opposite pairs
+- Live, position-weighted matching against all 16 MBTI types
+- Automatically mirrored shadow functions
+- Type descriptions, strengths, and challenges
+- Responsive Material UI interface with light and dark themes
 
-## Future Enhancements
+## Local development
 
-- **Detailed Type Information**: Click on any MBTI type to view detailed information about it.
-- **Custom Function Weights**: Assign custom weights to cognitive functions to refine the matching process.
-- **User Profiles**: Save and compare different typing profiles for the same individual.
+Requires a current Node.js LTS release and npm.
 
-## Getting Started
+```bash
+npm ci
+npm run dev
+```
 
-1. Clone the repository:
+Vite prints the local URL. Useful checks:
 
-   ```bash
-   git clone https://github.com/your-username/mbti-type-aid.git
-   ```
+```bash
+npm run test:run
+npm run lint
+npm run build
+npm run preview
+```
 
-2. Navigate to the project directory:
+## Project structure
 
-   ```bash
-   cd mbti-type-aid
-   ```
+```text
+src/
+  components/    UI grouped by feature
+  data/          MBTI stacks, descriptions, and position copy
+  domain/        Cognitive-function types and stack primitives
+  hooks/         Input-mode and tooltip behavior
+  theme/         Material UI theme and design tokens
+  utils/         Stack validation and matching rules
+```
 
-3. Install dependencies:
+See [`AGENTS.md`](./AGENTS.md) for the detailed architecture, domain invariants,
+testing notes, and deployment behavior.
 
-   ```bash
-   npm install
-   ```
+## Deployment
 
-4. Start the development server:
+The production Vercel build is served from `/`, which is the default
+`VITE_BASE_PATH`. The GitHub Pages workflow serves the same bundle from
+`/mbti-type-aid/` and sets `VITE_BASE_PATH` explicitly during its build.
 
-   ```bash
-   npm run dev
-   ```
+If another host serves the app from a subdirectory, set `VITE_BASE_PATH` to an
+absolute path with leading and trailing slashes, for example:
 
-## Contributing
-
-Contributions are welcome! Feel free to submit issues or pull requests.
+```bash
+VITE_BASE_PATH=/example-subpath/ npm run build
+```

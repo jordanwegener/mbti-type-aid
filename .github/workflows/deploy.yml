@@ -23,6 +23,8 @@ jobs:
         run: npm ci
       - name: Build
         run: npm run build
+        env:
+          VITE_BASE_PATH: /mbti-type-aid/
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
